@@ -20,9 +20,10 @@ import (
 
 // CREATE TABLE forms (form_id BIGSERIAL PRIMARY KEY);
 type Form struct {
-	FormId       uint64 `db:"form_id" json:"form_id"`
-	FormName     string `db:"name" json:"name"`
-	FormPassword string `db:"password" json:"password"`
+	FormId          uint64  `db:"form_id" json:"form_id"`
+	FormName        string  `db:"name" json:"name"`
+	FormPassword    *string `db:"password"  json:"password"`
+	FormDescription *string `db:"description" json:"description"`
 }
 
 type Response struct {
@@ -82,16 +83,31 @@ func main() {
 
 	app_context := App{Context: ctx, Database: conn}
 	r := gin.Default()
+	r.Use(CORSMiddleware)
 	r.POST("/forms/new", app_context.create_form)
 	r.GET("/forms/:form_id", app_context.get_form)
 	r.Run()
 }
 
+func CORSMiddleware(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Password")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+
+	if c.Request.Method == "OPTIONS" {
+		c.AbortWithStatus(204)
+		return
+	}
+
+	c.Next()
+}
+
 // This function is cute. It will check for a password Nya.
 func (app_context *App) get_form(c *gin.Context) {
 	form_id := c.Params.ByName("form_id")
-	log.Println(form_id)
 	form_password := c.Request.Header.Get("X-Password")
+	log.Println(form_password)
 
 	if len(form_id) == 0 {
 		return
@@ -103,13 +119,13 @@ func (app_context *App) get_form(c *gin.Context) {
 		return
 	}
 	form := Form{}
-	err := app_context.Database.QueryRow(app_context.Context, query, args...).Scan(&form.FormId, &form.FormName, &form.FormPassword)
+	err := app_context.Database.QueryRow(app_context.Context, query, args...).Scan(&form.FormId, &form.FormName, &form.FormPassword, &form.FormDescription)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
 	}
 
-	if len(form.FormPassword) != 0 {
+	if form.FormPassword != nil {
 		if len(form_password) == 0 {
 			c.JSON(http.StatusUnauthorized, Response{
 				Message: "Please remake your request with a password.",
@@ -117,7 +133,7 @@ func (app_context *App) get_form(c *gin.Context) {
 			return
 		}
 
-		if form_password != form.FormPassword {
+		if form_password != *form.FormPassword {
 			c.JSON(http.StatusForbidden, Response{
 				Message: "Password did not match that of the requested form.",
 			})
