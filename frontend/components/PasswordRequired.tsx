@@ -28,14 +28,15 @@ const PasswordRequired = ({open, password, setPassword, handleClose, handleSubmi
                         label="Password" 
                         variant="outlined"
                         type="password"
+                        autoFocus
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
                 </Stack>
             </DialogContent>
             <DialogActions>
-            <Button color="inherit" onClick={(_) => { window.location.href="/" }}>Go Home</Button>
-            <Button variant="outlined" disableElevation onClick={handleSubmit} endIcon={<ArrowForwardIcon/>}>Submit</Button>
+                <Button color="inherit" onClick={(_) => { window.location.href="/" }}>Go Home</Button>
+                <Button variant="outlined" disableElevation onClick={handleSubmit} endIcon={<ArrowForwardIcon/>}>Submit</Button>
             </DialogActions>
         </Dialog>
     );

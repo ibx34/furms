@@ -14,16 +14,24 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	PgxMigration "github.com/golang-migrate/migrate/v4/database/pgx"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/joho/godotenv"
 )
 
-// CREATE TABLE forms (form_id BIGSERIAL PRIMARY KEY);
+type FormQuestion struct {
+	QID          uint64  `db:"id" json:"id"`
+	QFormId      uint64  `db:"form_id" json:"form_id"`
+	QName        string  `db:"name" json:"name"`
+	QType        uint64  `db:"type" json:"type"`
+	QDescription *string `db:"description" json:"description"`
+}
+
 type Form struct {
-	FormId          uint64  `db:"form_id" json:"form_id"`
-	FormName        string  `db:"name" json:"name"`
-	FormPassword    *string `db:"password"  json:"password"`
-	FormDescription *string `db:"description" json:"description"`
+	FormId          uint64         `db:"form_id" json:"form_id"`
+	FormName        string         `db:"name" json:"name"`
+	FormPassword    *string        `db:"password"  json:"password"`
+	FormDescription *string        `db:"description" json:"description"`
+	FormQuestions   []FormQuestion `json:"questions"`
 }
 
 type Response struct {
@@ -32,7 +40,7 @@ type Response struct {
 
 type App struct {
 	Context  context.Context
-	Database *pgx.Conn
+	Database *pgxpool.Pool
 }
 
 var (
@@ -47,11 +55,14 @@ func main() {
 
 	ctx := context.Background()
 
-	// urlExample := "postgres://username:password@localhost:5432/database_name"
-	conn, err := pgx.Connect(ctx, os.Getenv("DATABASE_URL"))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
+	cfg, errConfig := pgxpool.ParseConfig(os.Getenv("DATABASE_URL"))
+	if errConfig != nil {
+		fmt.Println("Bad!")
+	}
+
+	dbConn, errConnectConfig := pgxpool.ConnectConfig(ctx, cfg)
+	if errConnectConfig != nil {
+		log.Fatalf("Failed to connect to database: %v", errConnectConfig)
 	}
 
 	instance, errOpen := sql.Open("pgx", os.Getenv("DATABASE_URL"))
@@ -79,9 +90,9 @@ func main() {
 	}
 	migrate.Up()
 
-	defer conn.Close(ctx)
+	defer dbConn.Close()
 
-	app_context := App{Context: ctx, Database: conn}
+	app_context := App{Context: ctx, Database: dbConn}
 	r := gin.Default()
 	r.Use(CORSMiddleware)
 	r.POST("/forms/new", app_context.create_form)
@@ -141,6 +152,28 @@ func (app_context *App) get_form(c *gin.Context) {
 		}
 	}
 
+	var questions []FormQuestion
+
+	_query, _args, _errQueryArgs := UsingDollarSigns.Select("*").From("form_questions").Where(sq.Eq{"form_id": form_id}).ToSql()
+	if _errQueryArgs != nil {
+		fmt.Println(errQueryArgs)
+		return
+	}
+	rows, _err := app_context.Database.Query(app_context.Context, _query, _args...)
+	for rows.Next() {
+		question := FormQuestion{}
+		err := rows.Scan(&question.QID, &question.QFormId, &question.QName, &question.QType, &question.QDescription)
+		if err != nil {
+			return
+		}
+		questions = append(questions, question)
+	}
+
+	if _err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+	}
+	log.Println(questions)
+	form.FormQuestions = questions
 	c.JSON(http.StatusOK, form)
 }
 

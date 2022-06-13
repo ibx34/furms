@@ -1,18 +1,30 @@
-import { Alert, Grid, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Button, Divider, Grid, Paper, Stack, Typography } from '@mui/material'
 import axios from 'axios'
 import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import PasswordRequired from '../components/PasswordRequired'
+import Question from '../components/Question'
+import SendIcon from '@mui/icons-material/Send';
 
 const ShowForm: NextPage = () => {
     const { isReady, query } = useRouter();
     const [ formRequiresPassword, setFormRequiresPassword] = useState<boolean>(false);
     const [ providedFormPassword, setProvidedFormPassword] = useState<string>("");
     const [ formLoaded, setFormLoaded] = useState<boolean>(false);
-    const [ form, setForm] = useState<any>();
+    const [ form, setForm] = useState<{
+        name: string,
+        form_id: number,
+        password: string,
+        description: string
+        questions: {
+            name: string,
+            form_id: number,
+            id: number,
+            type: number,
+            description: string
+        }[]
+    }>();
 
     useEffect(() => {		
         if (isReady && !formLoaded) {
@@ -69,27 +81,41 @@ const ShowForm: NextPage = () => {
                     }                  
                 }}
             />
-            <Grid container spacing={5} columns={16} direction="row" paddingTop={5}>
-                <Grid item xs />
-                <Grid item xs={8}>
-                    { form !== undefined ?
-                        <Paper variant="outlined" elevation={8}>
-                            <Stack spacing={1} padding={2}>
-                                <Typography variant="h3" component="div">
-                                    {form["name"]}
-                                </Typography>
-                                <Typography variant="body1" component="div">
-                                    {form["description"]}
-                                </Typography>
-                                
+
+            { form !== undefined ?
+                <Grid container spacing={5} columns={24} direction="row" paddingTop={5}>
+                    <Grid item xs />
+                    <Grid item xs={12}>
+                        <Stack spacing={4}>
+                            <Paper variant="outlined" elevation={8}>
+                                <Stack spacing={1} padding={2}>
+                                    <Typography variant="h5" component="div">
+                                        {form.name}
+                                    </Typography>
+                                    <Typography variant="body1" component="div">
+                                        {form.description}
+                                    </Typography>
+                                </Stack>
+                            </Paper>
+
+                            { form.questions !== undefined || form.questions !== null ?
+                                form.questions.map((question: { name: string; form_id: number; id: number; type: number }) => (
+                                    <Question question={question} />
+                                ))
+                                :
+                                null
+                            }
+                            
+                            <Stack spacing={4} direction="row-reverse">
+                                <Button variant="outlined" color="primary" endIcon={<SendIcon/>}>Submit</Button>
                             </Stack>
-                        </Paper>
-                        :
-                        null
-                    }
+                        </Stack>
+                    </Grid>
+                    <Grid item xs />
                 </Grid>
-                <Grid item xs />
-            </Grid>
+                :
+                null
+            }
         </div>
     )
 }
