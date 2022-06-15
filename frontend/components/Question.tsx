@@ -11,7 +11,10 @@ import { DialogContentText, Stack } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 const Question = ({
-    question
+    question,
+    updateResponse,
+    deleteResponseKey,
+    disable
 }: {
     question: {
         name: string,
@@ -19,16 +22,32 @@ const Question = ({
         id: number,
         type: number,
         description: string
-    }
+    },
+    updateResponse: (question: number, input: string | boolean) => void,
+    deleteResponseKey: (question: number) => void,
+    disable: boolean
 }) => {
+    const [value, setValue] = useState<string | boolean>();
+
+    const updateValue = (value: string | boolean) => {
+        setValue(value);
+        console.log(typeof value == "string");
+        if (typeof value == "string" && value.toString().length <= 0) {
+            return deleteResponseKey(question.id);
+        }
+        updateResponse(question.id, value);
+    }
 
     const renderInput = () => {
         switch (question.type) {
             case 0:
                 return (
                     <TextField 
-                        label="Input" 
-                        variant="filled"
+                        variant="outlined"
+                        size="small"
+                        value={value}
+                        onChange={(e) => updateValue(e.target.value)}
+                        disabled={disable}
                     />
                 )
         }
