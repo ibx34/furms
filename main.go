@@ -26,11 +26,13 @@ type FormQuestion struct {
 	QName        string  `db:"name" json:"name"`
 	QType        uint64  `db:"type" json:"type"`
 	QDescription *string `db:"description" json:"description"`
+	QMinValue    *uint64 `db:"-" json:"min"`
+	QMaxValue    *uint64 `db:"-" json:"max"`
 }
 
 type QuestionResponse struct {
-	QuestionId uint64 `json:"id"`
-	Response   string `json:"response"`
+	QuestionId uint64      `json:"id"`
+	Response   interface{} `json:"response"`
 }
 
 type Form struct {
@@ -39,7 +41,7 @@ type Form struct {
 	FormPassword    *string           `db:"password"  json:"password"`
 	FormDescription *string           `db:"description" json:"description"`
 	FormQuestions   []FormQuestion    `json:"questions"`
-	FormQQuestions  pgtype.JSONBArray `db:"questions" json:"_questions"`
+	FormQQuestions  pgtype.JSONBArray `db:"questions" json:"-"`
 	FormOneResponse bool              `db:"one_response" json:"limit"`
 }
 
@@ -52,6 +54,10 @@ type FormResponse struct {
 
 type Response struct {
 	Message string `json:"message"`
+}
+
+type CreateQuestionResponse struct {
+	Questions []FormQuestion `json:"questions"`
 }
 
 type App struct {
@@ -112,7 +118,7 @@ func main() {
 	r := gin.Default()
 	r.Use(CORSMiddleware)
 	r.POST("/forms/new", app_context.create_form)
-	r.POST("/forms/:form_id/question", app_context.create_form_question)
+	r.PATCH("/forms/:form_id/questions", app_context.create_form_question)
 	r.GET("/forms/:form_id", app_context.get_form)
 	r.POST("/forms/:form_id/respond", app_context.create_form_response)
 	r.Run()
@@ -122,7 +128,7 @@ func CORSMiddleware(c *gin.Context) {
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Password")
-	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "PATCH, POST, OPTIONS, GET, PUT")
 
 	if c.Request.Method == "OPTIONS" {
 		c.AbortWithStatus(204)
@@ -173,34 +179,68 @@ func (app_context *App) create_form_question(c *gin.Context) {
 		return
 	}
 
-	type CreateFormQuestionRequest struct {
-		Name        string  `json:"name"`
-		Type        uint64  `json:"type"`
-		Description *string `json:"description"`
-	}
-
-	var new_question CreateFormQuestionRequest
-	if err := c.BindJSON(&new_question); err != nil {
-		return
-	}
-
-	query, args, errQueryArgs := UsingDollarSigns.Insert("form_questions").
-		Columns("name", "form_id", "description", "type").
-		Values(new_question.Name, form_id, new_question.Description, new_question.Type).
-		Suffix("RETURNING *").
-		ToSql()
-
+	query, args, errQueryArgs := UsingDollarSigns.Select("*").From("forms").Where(sq.Eq{"form_id": form_id}).ToSql()
 	if errQueryArgs != nil {
 		fmt.Println(errQueryArgs)
 		return
 	}
-
-	question := FormQuestion{}
-	err := app_context.Database.QueryRow(app_context.Context, query, args...).Scan(&question.QID, &question.QDescription, &question.QFormId, &question.QName, &question.QType)
+	form := Form{}
+	err := app_context.Database.QueryRow(app_context.Context, query, args...).Scan(&form.FormId, &form.FormName, &form.FormPassword, &form.FormDescription, &form.FormQQuestions, &form.FormOneResponse)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		fmt.Fprintf(os.Stderr, "1/.QueryRow failed: %v\n", err)
 	}
-	c.JSON(http.StatusOK, question)
+
+	var questions []FormQuestion
+	for _, q := range form.FormQQuestions.Elements {
+		question := FormQuestion{}
+		json.Unmarshal(q.Bytes, &question)
+		questions = append(questions, question)
+	}
+
+	type CreateFormResponseRequest struct {
+		Questions []FormQuestion `json:"questions"`
+	}
+
+	var new_questions CreateFormResponseRequest
+	if err := c.BindJSON(&new_questions); err != nil {
+		return
+	}
+	log.Println("Questions:", new_questions.Questions)
+
+	if len(questions) > 0 {
+		for i, q := range new_questions.Questions {
+			for qi, q2 := range questions {
+				if q.QID == q2.QID {
+					if q.QName != q2.QName || q.QDescription != q2.QDescription {
+						questions[qi] = q
+					}
+					// Because there is a weird case where the new questions could only be one
+					// we need to handle it.
+					if len(new_questions.Questions) == 1 && i > 0 {
+						i = 0
+					}
+					new_questions.Questions[i] = new_questions.Questions[len(new_questions.Questions)-1]
+					new_questions.Questions = new_questions.Questions[:len(new_questions.Questions)-1]
+				}
+			}
+		}
+	}
+	log.Println(new_questions.Questions)
+	updated_questions := append(questions, new_questions.Questions...)
+	log.Println(updated_questions)
+	jsonArray := pgtype.NewArrayType("json", pgtype.JSONOID, func() pgtype.ValueTranscoder { return &pgtype.JSON{} })
+	jsonArray.Set(updated_questions)
+
+	query, args, errQueryArgs = UsingDollarSigns.Update("forms").Set("questions", jsonArray).Where(sq.Eq{"form_id": form_id}).ToSql()
+	if errQueryArgs != nil {
+		fmt.Println(errQueryArgs)
+		return
+	}
+	err = app_context.Database.QueryRow(app_context.Context, query, args...).Scan(&form.FormId, &form.FormName, &form.FormPassword, &form.FormDescription, &form.FormQQuestions, &form.FormOneResponse)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "1/.QueryRow failed: %v\n", err)
+	}
+	c.JSON(http.StatusOK, CreateQuestionResponse{Questions: updated_questions})
 }
 
 // This function is cute. It will check for a password Nya.
@@ -300,7 +340,7 @@ func (app_context *App) create_form(c *gin.Context) {
 	query, args, errQueryArgs := UsingDollarSigns.Insert("forms").
 		Columns("name", "password").
 		Values(new_form.FormName, new_form.FormPassword).
-		Suffix("RETURNING *").
+		Suffix("RETURNING form_id, name").
 		ToSql()
 
 	if errQueryArgs != nil {
@@ -312,10 +352,11 @@ func (app_context *App) create_form(c *gin.Context) {
 	fmt.Println(args)
 
 	form := Form{}
-	err := app_context.Database.QueryRow(app_context.Context, query, args...).Scan(&form.FormId, &form.FormName, &form.FormPassword)
+	err := app_context.Database.QueryRow(app_context.Context, query, args...).Scan(&form.FormId, &form.FormName)
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
 	}
+	log.Println(form)
 	c.JSON(http.StatusOK, form)
 }

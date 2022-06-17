@@ -67,7 +67,10 @@ const NewForm: NextPage = () => {
                     "password": formPassword
                 }
             }
-        ).then((response) => {}).catch((error) => {});
+        ).then((response) => {
+            console.log(response.data)
+            window.location.href = `/forms/${response.data.form_id}/questions`
+        }).catch((error) => {});
         setCreatingForm(false);
     }
 
