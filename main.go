@@ -20,14 +20,20 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type ChoiceQuestionType struct {
+	MultipleSelections bool     `db:"-" json:"multiple_selections"`
+	Choices            []string `db:"-" json:"choices"`
+}
+
 type FormQuestion struct {
-	QID          uint64  `db:"id" json:"id"`
-	QFormId      uint64  `db:"form_id"`
-	QName        string  `db:"name" json:"name"`
-	QType        uint64  `db:"type" json:"type"`
-	QDescription *string `db:"description" json:"description"`
-	QMinValue    *uint64 `db:"-" json:"min"`
-	QMaxValue    *uint64 `db:"-" json:"max"`
+	QID          uint64              `db:"id" json:"id"`
+	QFormId      uint64              `db:"form_id"`
+	QName        string              `db:"name" json:"name"`
+	QType        uint64              `db:"type" json:"type"`
+	QDescription *string             `db:"description" json:"description"`
+	QMinValue    *uint64             `db:"-" json:"min"`
+	QMaxValue    *uint64             `db:"-" json:"max"`
+	QChoice      *ChoiceQuestionType `db:"-" json:"choices"`
 }
 
 type QuestionResponse struct {
@@ -46,10 +52,11 @@ type Form struct {
 }
 
 type FormResponse struct {
-	ResponseId     uint64            `db:"id" json:"id"`
-	ResponseFormId uint64            `db:"form_id" json:"form_id"`
-	ResponseTime   time.Time         `db:"response_at" json:"response_at"`
-	Responses      pgtype.JSONBArray `db:"responses" json:"responses"`
+	ResponseId     uint64             `db:"id" json:"id"`
+	ResponseFormId uint64             `db:"form_id" json:"form_id"`
+	ResponseTime   time.Time          `db:"response_at" json:"response_at"`
+	DBResponses    pgtype.JSONBArray  `db:"responses" json:"-"`
+	Responses      []QuestionResponse `db:"-" json:"responses"`
 }
 
 type Response struct {
@@ -58,6 +65,10 @@ type Response struct {
 
 type CreateQuestionResponse struct {
 	Questions []FormQuestion `json:"questions"`
+}
+
+type GetResponsesResponse struct {
+	Responses []FormResponse `json:"responses"`
 }
 
 type App struct {
@@ -121,6 +132,7 @@ func main() {
 	r.PATCH("/forms/:form_id/questions", app_context.create_form_question)
 	r.GET("/forms/:form_id", app_context.get_form)
 	r.POST("/forms/:form_id/respond", app_context.create_form_response)
+	r.GET("/forms/:form_id/responses", app_context.get_form_responses)
 	r.Run()
 }
 
@@ -136,6 +148,40 @@ func CORSMiddleware(c *gin.Context) {
 	}
 
 	c.Next()
+}
+
+func (app_context *App) get_form_responses(c *gin.Context) {
+	form_id := c.Params.ByName("form_id")
+	if len(form_id) == 0 {
+		return
+	}
+
+	query, args, errQueryArgs := UsingDollarSigns.Select("*").From("form_response").Where(sq.Eq{"form_id": form_id}).ToSql()
+	if errQueryArgs != nil {
+		fmt.Println(errQueryArgs)
+		return
+	}
+
+	rows, err := app_context.Database.Query(app_context.Context, query, args...)
+	// .Scan(&form.FormId, &form.FormName, &form.FormPassword, &form.FormDescription, &form.FormQQuestions, &form.FormOneResponse)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+	}
+
+	var responses []FormResponse
+	for rows.Next() {
+		response := FormResponse{}
+		rows.Scan(&response.ResponseId, &response.ResponseFormId, &response.ResponseTime, &response.DBResponses)
+		var question_responses []QuestionResponse
+		for _, q := range response.DBResponses.Elements {
+			question := QuestionResponse{}
+			json.Unmarshal(q.Bytes, &question)
+			question_responses = append(question_responses, question)
+		}
+		response.Responses = question_responses
+		responses = append(responses, response)
+	}
+	c.JSON(http.StatusOK, GetResponsesResponse{Responses: responses})
 }
 
 func (app_context *App) create_form_response(c *gin.Context) {

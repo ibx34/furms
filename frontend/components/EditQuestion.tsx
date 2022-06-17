@@ -14,6 +14,10 @@ import Select from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import MuiInput from '@mui/material/Input';
 import FormattedInput from './NumberInput';
+import AddIcon from '@mui/icons-material/Add';
+import Tooltip from '@mui/material/Tooltip';
+import { QuestionType, FormType, ChoicesType } from "../types/types";
+import RemoveIcon from '@mui/icons-material/Remove';
 
 const Question = ({
     question,
@@ -21,30 +25,27 @@ const Question = ({
     index,
     updateQuestion
 }: {
-    question: {
-        name: string,
-        form_id: number,
-        id: number,
-        type: number,
-        description: string,
-        min: number | null,
-        max: number | null
-    },
+    question: QuestionType,
     disable: boolean,
     index: number,
     updateQuestion: (index: number, question: any) => void
 }) => {
-    const [max, setMax] = useState<number>(0);
-    const [min, setMin] = useState<number>(0);
-    const [_question, setQuestion] = useState<{
-        name: string,
-        form_id: number,
-        id: number,
-        type: number,
-        description: string,
-        min: number | null,
-        max: number | null
-    }>(question);
+    const [_question, setQuestion] = useState<QuestionType>(question);
+
+    const updateChoiceValue = (idx: number, newValue: string) => {
+        if (_question.choices) {
+            if (_question.choices.choices) {
+                _question.choices.choices[idx] = newValue;
+                updateQuestionn({
+                    ..._question,
+                    choices: {
+                        ..._question.choices,
+                        choices: _question.choices.choices
+                    }
+                })
+            }
+        }
+    }
 
     const renderSubOptions = () => {
         switch (_question.type) {
@@ -55,7 +56,6 @@ const Question = ({
                             <Typography variant="h6" component="div">
                                 Text Options
                             </Typography>
-                            <Divider />
                         </div>
 
                         <Stack spacing={2} direction="row">
@@ -78,18 +78,95 @@ const Question = ({
                         </Stack>
                     </Stack>
                 )
+
+            case 2:
+                return (
+                    <Stack spacing={2}>
+                        <div>
+                            <Typography variant="h6" component="div">
+                                Choice Options
+                            </Typography>
+                        </div>
+
+                        <Stack spacing={2}>
+                            <div>
+                                <FormControlLabel 
+                                    control={
+                                        <Switch 
+                                            value={_question.choices == null ? false : _question.choices.multiple_sections} 
+                                            onChange={(e) => {
+                                                if (_question.choices) {
+                                                    updateChoiceSettings({
+                                                        ..._question.choices,
+                                                        multiple_sections: e.target.checked
+                                                    })                                                    
+                                                } else {
+                                                    updateChoiceSettings({
+                                                        choices: [],
+                                                        multiple_sections: e.target.checked
+                                                    })
+                                                }
+                                            }} 
+                                        />
+                                    } 
+                                    label="Allow multiple selections" 
+                                />
+                            </div>
+                        </Stack>
+                        
+                        { _question.choices != null && _question.choices.choices != null ? 
+                            <Stack spacing={2}>
+                                <Typography variant="h6" component="div">
+                                    Choices
+                                </Typography>
+                                
+                                {_question.choices.choices.map((_, idx: number) => {
+                                    return (<Stack spacing={1} direction="row">
+                                        <TextField 
+                                            variant="outlined"
+                                            size="small"
+                                            label={`Choice ${idx+1}`}
+                                            value={_question.choices!.choices![idx]}
+                                            onChange={(e) => updateChoiceValue(idx,e.target.value)}
+                                            disabled={disable}
+                                        />
+                                        <IconButton disabled={disable}><RemoveIcon /></IconButton>
+                                    </Stack>)
+                                })}
+                                <Divider>
+                                    <IconButton disabled={disable} onClick={(_) => {
+                                        if (_question.choices) {
+                                            if (_question.choices.choices) {
+                                                updateQuestionn({
+                                                    ..._question,
+                                                    choices: {
+                                                        ..._question.choices,
+                                                        choices: [..._question.choices.choices, ""]
+                                                    }
+                                                })
+                                            }
+                                        }
+                                    }}>
+                                        <AddIcon />
+                                    </IconButton>
+                                </Divider>
+                            </Stack>
+                            :
+                            null
+                        }
+                    </Stack>
+                )                
         }
     }
 
-    const updateQuestionn = (question: {
-        name: string,
-        form_id: number,
-        id: number,
-        type: number,
-        description: string,
-        min: number | null,
-        max: number | null
-    }) => {
+    const updateChoiceSettings = (choices: ChoicesType) => {
+        updateQuestionn({
+            ..._question,
+            choices: choices
+        })
+    }
+
+    const updateQuestionn = (question: QuestionType) => {
         setQuestion(question);
         updateQuestion(index, 
             question
@@ -122,14 +199,29 @@ const Question = ({
                         label="Question Type"
                         size="small"
                         value={_question.type}
-                        onChange={(e) => updateQuestionn({
-                            ..._question,
-                            type: e.target.value as number
-                        })}
+                        onChange={(e) => {
+                            let q_type = e.target.value as number;
+                            if (q_type == 2) {
+                                updateQuestionn({
+                                    ..._question,
+                                    type: q_type,
+                                    choices: {
+                                        choices: [],
+                                        multiple_sections: false
+                                    }
+                                });                            
+                            } else {
+                                updateQuestionn({
+                                    ..._question,
+                                    type: q_type
+                                });
+                            }
+                        }}
                         disabled={disable}
                     >
                         <MenuItem value={0}>Text</MenuItem>
                         <MenuItem value={1}>Number</MenuItem>
+                        <MenuItem value={2}>Choice</MenuItem>
                     </Select>
                 </FormControl>
                 {renderSubOptions()}

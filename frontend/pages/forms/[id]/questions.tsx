@@ -9,6 +9,7 @@ import EditQuestion from '../../../components/EditQuestion'
 import SendIcon from '@mui/icons-material/Send';
 import { red } from '@mui/material/colors'
 import { CircularProgress } from '@mui/material';
+import { QuestionType, FormType } from "../../../types/types";
 
 const UpdateFormQuestions: NextPage = () => {
     const { isReady, query } = useRouter();
@@ -18,30 +19,8 @@ const UpdateFormQuestions: NextPage = () => {
     const [ providedFormPassword, setProvidedFormPassword] = useState<string>("");
     const [ formLoaded, setFormLoaded] = useState<boolean>(false);
     const [ savingQuestions, setSavingQuestions] = useState<boolean>(false);
-    const [ newQuestions, setNewQuestions] = useState<{
-        name: string,
-        form_id: number,
-        id: number,
-        type: number,
-        description: string,
-        min: number | null,
-        max: number | null
-    }[]>([]);
-    const [ form, setForm] = useState<{
-        name: string,
-        form_id: number,
-        password: string,
-        description: string
-        questions: {
-            name: string,
-            form_id: number,
-            id: number,
-            type: number,
-            description: string,
-            min: number | null,
-            max: number | null
-        }[]
-    }>();
+    const [ newQuestions, setNewQuestions] = useState<QuestionType[]>([]);
+    const [ form, setForm] = useState<FormType>();
     const [formErrors, setFormErrors] = useState<{
         code: number,
         message: string
@@ -99,22 +78,15 @@ const UpdateFormQuestions: NextPage = () => {
                 return;
             }
 
-            let question: {
-                name: string,
-                form_id: number,
-                id: number,
-                type: number,
-                description: string,
-                min: number | null,
-                max: number | null,
-            } = {
+            let question: QuestionType = {
                 name: "",
                 form_id: Number(query.id),
                 id: next_id,
                 type: 0,
                 description: "",
                 min: null,
-                max: null
+                max: null,
+                choices: null
             };
     
             setNewQuestions([...newQuestions, question]);
@@ -220,7 +192,7 @@ const UpdateFormQuestions: NextPage = () => {
                                         </Divider>
 
                                         { loadQuestions() != null ?
-                                            <>{loadQuestions().map((question: { name: string; form_id: number; id: number; type: number, description: string, min: number | null, max: number | null }, index: number) => (
+                                            <>{loadQuestions().map((question: QuestionType, index: number) => (
                                                 <EditQuestion question={newQuestions[index]} index={index} disable={false} updateQuestion={updateQuestions}/>
                                             ))}</>
                                             :

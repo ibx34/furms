@@ -10,6 +10,12 @@ import { Divider, IconButton, Paper, Typography } from '@mui/material';
 import { DialogContentText, Stack } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import FormattedInput from './NumberInput';
+import { QuestionType } from '../types/types';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormControl from '@mui/material/FormControl';
+import FormLabel from '@mui/material/FormLabel';
 
 const Question = ({
     question,
@@ -18,15 +24,7 @@ const Question = ({
     disable,
     startingValue
 }: {
-    question: {
-        name: string,
-        form_id: number,
-        id: number,
-        type: number,
-        description: string,
-        min: number | null,
-        max: number | null
-    },
+    question: QuestionType,
     updateResponse: (question: number, input: string | boolean | number) => void,
     deleteResponseKey: (question: number) => void,
     disable: boolean,
@@ -104,6 +102,21 @@ const Question = ({
                         // disabled={disable}
                         // error={error}                    
                     />)
+                }
+            case 2:
+                if (typeof value == "string" && question.choices && question.choices.choices) {
+                    return (
+                        <FormControl>
+                            <RadioGroup
+                                defaultValue={value}
+                                onChange={(e) => updateValue(e.target.value)}
+                            >
+                                {question.choices.choices.map((c:string,_idx:number) => (
+                                    <FormControlLabel disabled={disable} value={_idx} control={<Radio />} label={c} />
+                                ))}
+                            </RadioGroup>
+                        </FormControl>
+                    )
                 }
         }
         return (<>Error...</>)

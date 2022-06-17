@@ -6,8 +6,9 @@ import { useEffect, useState } from 'react'
 import PasswordRequired from '../../components/PasswordRequired'
 import Question from '../../components/Question'
 import SendIcon from '@mui/icons-material/Send';
-import { red } from '@mui/material/colors'
+import { red, yellow } from '@mui/material/colors'
 import { CircularProgress } from '@mui/material';
+import { QuestionType, FormType } from "../../types/types";
 
 const ShowForm: NextPage = () => {
     const { isReady, query } = useRouter();
@@ -21,21 +22,7 @@ const ShowForm: NextPage = () => {
         }
     }>({});
     const [formLoaded, setFormLoaded] = useState<boolean>(false);
-    const [form, setForm] = useState<{
-        name: string,
-        form_id: number,
-        password: string,
-        description: string
-        questions: {
-            name: string,
-            form_id: number,
-            id: number,
-            type: number,
-            description: string,
-            min: number | null,
-            max: number | null
-        }[]
-    }>();
+    const [form, setForm] = useState<FormType>();
     const [formErrors, setFormErrors] = useState<{
         code: number,
         message: string
@@ -85,6 +72,7 @@ const ShowForm: NextPage = () => {
     }
 
     const submitResponse = () => {
+        
         setProcessingForm(true);
         let errors = checkFormIsGood();
         if (errors.length > 0) {
@@ -190,13 +178,15 @@ const ShowForm: NextPage = () => {
                                 </Paper>
 
                                 {form.questions != undefined || form.questions != null ?
-                                    form.questions.map((question: { name: string; form_id: number; id: number; type: number, description: string, min: number | null, max: number | null }) => {
+                                    form.questions.map((question: QuestionType) => {
                                         let startingValue = (): string | number | boolean | undefined => {
                                             switch (question.type) {
                                                 case 0:
                                                     return "";
                                                 case 1:
                                                     return 0;
+                                                case 2:
+                                                    return "";
                                             }
                                             return undefined
                                         };

@@ -15,23 +15,9 @@ const NewForm: NextPage = () => {
     }[]>([]);
     const [formDescription, setFormDescription] = useState<string>();
     const [formPassword, setFormPassword] = useState<string | null>(null);
-    const [formQuestions, setFormQuestions] = useState<{
-        name: string,
-        form_id: number,
-        id: number,
-        type: number,
-        description: string
-    }[] | null>(null);
 
     const checkFormIsGood = (): any[]  => {
         let final_errors = [];
-        // if (formQuestions == null || (formQuestions != null && formQuestions.length <= 0)) {
-        //     final_errors.push({
-        //         code: 0,
-        //         message: "Not enough questions. There must be more than one."
-        //     });
-        // }
-
         if (!formName || (formName && formName.length <= 0)) {
             final_errors.push({
                 code: 1,
@@ -156,10 +142,6 @@ const NewForm: NextPage = () => {
                                         }
                                     </Stack>
                                 </Stack>
-
-                            {/* <Stack spacing={4} direction="row">
-                                <Button variant="outlined" color="primary" onClick={createForm}>Create</Button>
-                            </Stack> */}
                         </Stack>
                     </Paper>
 
