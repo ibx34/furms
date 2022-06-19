@@ -46,7 +46,7 @@ const NewForm: NextPage = () => {
         setFormErrors([]);
 
         axios.request(
-            {withCredentials: false, method:"post",url:`http://localhost:8080/forms/new`,
+            {withCredentials: false, method:"post",url:`http://localhost:3001/api/forms/new`,
                 data: {
                     "name": formName,
                     "description": formDescription,
@@ -68,8 +68,8 @@ const NewForm: NextPage = () => {
                     { formErrors.length > 0 ?
                         <Alert severity='error'>
                             <AlertTitle>There were some problems with the form you tried to create.</AlertTitle>
-                            {formErrors.map((err: any) => (
-                                <Typography variant="body1" component="div">
+                            {formErrors.map((err: any, idx:number) => (
+                                <Typography key={idx} variant="body1" component="div">
                                     &#8226; {err.message} (CODE: {err.code})
                                 </Typography>
                             ))}

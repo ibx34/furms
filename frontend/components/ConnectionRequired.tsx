@@ -10,35 +10,25 @@ import Paper, { IconButton } from '@mui/material';
 import { DialogContentText, Stack } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
-const PasswordRequired = ({open, password, setPassword, handleClose, handleSubmit}: { open: boolean, password: string, setPassword: (arg0: string) => void, handleClose: () => void, handleSubmit: () => void}) => {
+const ConnectionRequired = ({open, handleClose}: { open: boolean, handleClose: () => void}) => {
     return (
         <Dialog open={open} onClose={handleClose} PaperProps={{elevation: 3, variant: "outlined"}}>
             <DialogTitle>
-                Password Required
+                Connection Required
             </DialogTitle>
 
             <DialogContent>
                 <Stack direction="column" spacing={2}>
                     <DialogContentText>
-                        The form you&apos;re trying to access requires a password. You should have recieved a password
-                        if you were sent the form in the first place.
+                        The form you&apos;re trying to access requests that you have a <strong>Discord</strong> account connected. Please login below with your Discord account.
                     </DialogContentText>
-
-                    <TextField 
-                        label="Password" 
-                        variant="outlined"
-                        type="password"
-                        autoFocus
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
                 </Stack>
             </DialogContent>
             <DialogActions>
                 <Button color="inherit" onClick={(_) => { window.location.href="/" }}>Go Home</Button>
-                <Button variant="outlined" disableElevation onClick={handleSubmit} endIcon={<ArrowForwardIcon/>}>Submit</Button>
+                <Button variant="outlined" disableElevation onClick={(_) => window.location.href="/api/oauth2/login?service=discord"}>Login</Button>
             </DialogActions>
         </Dialog>
     );
 };
-export default PasswordRequired;
+export default ConnectionRequired;

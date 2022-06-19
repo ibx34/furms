@@ -26,7 +26,7 @@ const ShowFormResponses: NextPage = () => {
         if (isReady) {
             if (isReady && !formLoaded) {
                 axios.request(
-                    { withCredentials: false, method: "get", url: `http://localhost:8080/forms/${query.id}` }
+                    { withCredentials: false, method: "get", url: `http://localhost:3001/api/forms/${query.id}` }
                 ).then((response) => {
                     setForm(response.data)
                 }).catch((error) => {
@@ -43,14 +43,14 @@ const ShowFormResponses: NextPage = () => {
 
             if (isReady && formLoaded && !responsesLoaded) {
                 axios.request(
-                    { withCredentials: false, method: "get", url: `http://localhost:8080/forms/${query.id}/responses` }
+                    { withCredentials: false, method: "get", url: `http://localhost:3001/api/forms/${query.id}/responses` }
                 ).then((response) => {
                     setResponses(response.data.responses);
                 }).catch((error) => {});
                 setResponsesLoaded(true);            
             }
         }
-    })
+    }, [isReady, formLoaded, responsesLoaded, query.id])
 
     return (
         <div>
@@ -65,7 +65,7 @@ const ShowFormResponses: NextPage = () => {
                             {
                                 withCredentials: false,
                                 method: "get",
-                                url: `http://localhost:8080/forms/${query.id}`,
+                                url: `http://localhost:3001/api/forms/${query.id}`,
                                 headers: {
                                     'X-Password': providedFormPassword
                                 }
@@ -98,7 +98,7 @@ const ShowFormResponses: NextPage = () => {
                                 <Stack spacing={3} padding={2}>
                                     <div>
                                         <Typography variant="h5" component="div">
-                                            Responses for "<strong>{form.name}</strong>"
+                                            Responses for &quot;<strong>{form.name}</strong>&quot;
                                         </Typography>
                                     </div>
                                 </Stack>
@@ -135,6 +135,7 @@ const ShowFormResponses: NextPage = () => {
                                     <Stack spacing={2}>
                                         { responses[currentResponse].responses.map((response,idx:number) => (
                                             <Question 
+                                                key={idx}
                                                 question={form.questions[response.id]} 
                                                 startingValue={response.response} 
                                                 disable={true} 

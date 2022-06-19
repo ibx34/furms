@@ -18,17 +18,21 @@ import AddIcon from '@mui/icons-material/Add';
 import Tooltip from '@mui/material/Tooltip';
 import { QuestionType, FormType, ChoicesType } from "../types/types";
 import RemoveIcon from '@mui/icons-material/Remove';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const Question = ({
     question,
     disable,
     index,
-    updateQuestion
+    updateQuestion,
+    //wait to delete questions.
+    //deleteQuestion
 }: {
     question: QuestionType,
     disable: boolean,
     index: number,
-    updateQuestion: (index: number, question: any) => void
+    updateQuestion: (index: number, question: any) => void,
+    //deleteQuestion: (index: number) => void
 }) => {
     const [_question, setQuestion] = useState<QuestionType>(question);
 
@@ -44,6 +48,16 @@ const Question = ({
                     }
                 })
             }
+        }
+    }
+
+    const deleteChoice = (idx:number) => {
+        if (_question.choices && _question.choices.choices) {
+            _question.choices.choices.splice(idx, 1);
+            updateChoiceSettings({
+                ..._question.choices,
+                choices: _question.choices.choices
+            })
         }
     }
 
@@ -121,7 +135,7 @@ const Question = ({
                                 </Typography>
                                 
                                 {_question.choices.choices.map((_, idx: number) => {
-                                    return (<Stack spacing={1} direction="row">
+                                    return (<Stack key={idx} spacing={1} direction="row">
                                         <TextField 
                                             variant="outlined"
                                             size="small"
@@ -130,7 +144,12 @@ const Question = ({
                                             onChange={(e) => updateChoiceValue(idx,e.target.value)}
                                             disabled={disable}
                                         />
-                                        <IconButton disabled={disable}><RemoveIcon /></IconButton>
+                                        <IconButton 
+                                            disabled={disable}
+                                            onClick={(_) => deleteChoice(idx)}
+                                        >
+                                            <RemoveIcon />
+                                        </IconButton>
                                     </Stack>)
                                 })}
                                 <Divider>

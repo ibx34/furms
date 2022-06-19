@@ -29,7 +29,7 @@ const UpdateFormQuestions: NextPage = () => {
     useEffect(() => {		
         if (isReady && !formLoaded) {
             axios.request(
-                {withCredentials: false, method:"get",url:`http://localhost:8080/forms/${query.id}`}
+                {withCredentials: false, method:"get",url:`http://localhost:3001/api/forms/${query.id}`}
             ).then((response) => {
                 setForm(response.data);
                 if (response.data.questions != null) {
@@ -46,7 +46,7 @@ const UpdateFormQuestions: NextPage = () => {
             });
             setFormLoaded(true);
         }
-    })
+    }, [isReady, formLoaded, query.id])
 
     const loadQuestions = () => {
         return newQuestions
@@ -95,7 +95,7 @@ const UpdateFormQuestions: NextPage = () => {
 
     const saveQuestions = () => {
         axios.request(
-            {withCredentials: false, method:"patch",url:`http://localhost:8080/forms/${query.id}/questions`,data: {
+            {withCredentials: false, method:"patch",url:`http://localhost:3001/api/forms/${query.id}/questions`,data: {
                 "questions": newQuestions
             }}
         ).then((response) => {
@@ -129,7 +129,7 @@ const UpdateFormQuestions: NextPage = () => {
                             {
                                 withCredentials: false, 
                                 method:"get",
-                                url:`http://localhost:8080/forms/${query.id}`,
+                                url:`http://localhost:3001/api/forms/${query.id}`,
                                 headers: {
                                     'X-Password': providedFormPassword
                                 }
@@ -193,7 +193,7 @@ const UpdateFormQuestions: NextPage = () => {
 
                                         { loadQuestions() != null ?
                                             <>{loadQuestions().map((question: QuestionType, index: number) => (
-                                                <EditQuestion question={newQuestions[index]} index={index} disable={false} updateQuestion={updateQuestions}/>
+                                                <EditQuestion key={index} question={newQuestions[index]} index={index} disable={false} updateQuestion={updateQuestions}/>
                                             ))}</>
                                             :
                                             null

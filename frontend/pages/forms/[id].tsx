@@ -1,9 +1,10 @@
-import { Alert, AlertTitle, Button, Divider, Grid, Paper, Stack, Typography } from '@mui/material'
+import { Alert, AlertTitle, Button, Dialog, DialogContent, DialogContentText, DialogTitle, Divider, Grid, Paper, Stack, Typography } from '@mui/material'
 import axios from 'axios'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import PasswordRequired from '../../components/PasswordRequired'
+import ConnectionRequired from '../../components/ConnectionRequired'
 import Question from '../../components/Question'
 import SendIcon from '@mui/icons-material/Send';
 import { red, yellow } from '@mui/material/colors'
@@ -13,7 +14,9 @@ import { QuestionType, FormType } from "../../types/types";
 const ShowForm: NextPage = () => {
     const { isReady, query } = useRouter();
     const [formRequiresPassword, setFormRequiresPassword] = useState<boolean>(false);
+    const [formRequiresConnection, setFormRequiresConnection] = useState<boolean>(false);
     const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
+    const [formFailedConnectionCheck, setformFailedConnectionCheck] = useState<boolean>(false);
     const [processingForm, setProcessingForm] = useState<boolean>(false);
     const [providedFormPassword, setProvidedFormPassword] = useState<string>("");
     const [questionResponses, setQuestionResponses] = useState<{
@@ -31,21 +34,36 @@ const ShowForm: NextPage = () => {
     useEffect(() => {
         if (isReady && !formLoaded) {
             axios.request(
-                { withCredentials: false, method: "get", url: `http://localhost:8080/forms/${query.id}` }
+                { withCredentials: false, method: "get", url: `http://localhost:3001/api/forms/${query.id}` }
             ).then((response) => {
                 setForm(response.data)
             }).catch((error) => {
                 if (error.response.status) {
                     switch (error.response.status) {
                         case 401:
-                            setFormRequiresPassword(true);
+                            if (error.response.data.code) {
+                                switch (error.response.data.code) {
+                                    case 0:
+                                        setFormRequiresPassword(true);
+                                    case 1:
+                                        setFormRequiresConnection(true);
+                                }
+                            }
+                            break;
+                        case 403:
+                            if (error.response.data.code) {
+                                switch (error.response.data.code) {
+                                    case 2: 
+                                        setformFailedConnectionCheck(true);
+                                }
+                            }
                             break;
                     }
                 }
             });
             setFormLoaded(true);
         }
-    })
+    }, [isReady, formLoaded, query.id])
 
     const updateFormResponse = (question: number, input: string | boolean | number) => {
         setQuestionResponses({
@@ -92,7 +110,7 @@ const ShowForm: NextPage = () => {
         });
         axios.request(
             {
-                withCredentials: false, method: "post", url: `http://localhost:8080/forms/${query.id}/respond`,
+                withCredentials: false, method: "post", url: `http://localhost:3001/api/forms/${query.id}/respond`,
                 data: {
                     "responses": true_responses
                 }
@@ -106,6 +124,25 @@ const ShowForm: NextPage = () => {
 
     return (
         <div>
+            <Dialog open={formFailedConnectionCheck} onClose={() => { }} PaperProps={{elevation: 3, variant: "outlined"}}>
+                <DialogTitle>
+                    Connection Required
+                </DialogTitle>
+
+                <DialogContent>
+                    <Stack direction="column" spacing={2}>
+                        <DialogContentText>
+                            This form requires you have a Discord connection. Please connect your Discord account before revisiting this form.
+                        </DialogContentText>
+                    </Stack>
+                </DialogContent>
+            </Dialog>
+
+            <ConnectionRequired 
+                open={formRequiresConnection}
+                handleClose={() => { }}            
+            />
+
             <PasswordRequired
                 open={formRequiresPassword}
                 handleClose={() => { }}
@@ -117,7 +154,7 @@ const ShowForm: NextPage = () => {
                             {
                                 withCredentials: false,
                                 method: "get",
-                                url: `http://localhost:8080/forms/${query.id}`,
+                                url: `http://localhost:3001/api/forms/${query.id}`,
                                 headers: {
                                     'X-Password': providedFormPassword
                                 }
@@ -150,8 +187,8 @@ const ShowForm: NextPage = () => {
                                 {formErrors.length > 0 ?
                                     <Alert severity='error'>
                                         <AlertTitle>There were some problems with the form you tried to submit.</AlertTitle>
-                                        {formErrors.map((err: any) => (
-                                            <Typography variant="body1" component="div">
+                                        {formErrors.map((err: any, idx:number) => (
+                                            <Typography key={idx} variant="body1" component="div">
                                                 &#8226; {err.message} (CODE: {err.code})
                                             </Typography>
                                         ))}
@@ -178,7 +215,7 @@ const ShowForm: NextPage = () => {
                                 </Paper>
 
                                 {form.questions != undefined || form.questions != null ?
-                                    form.questions.map((question: QuestionType) => {
+                                    form.questions.map((question: QuestionType, idx:number) => {
                                         let startingValue = (): string | number | boolean | undefined => {
                                             switch (question.type) {
                                                 case 0:
@@ -192,6 +229,7 @@ const ShowForm: NextPage = () => {
                                         };
 
                                         return (<Question
+                                            key={idx}
                                             question={question}
                                             updateResponse={updateFormResponse}
                                             deleteResponseKey={deleteResponseKey}

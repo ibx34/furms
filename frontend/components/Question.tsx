@@ -112,7 +112,7 @@ const Question = ({
                                 onChange={(e) => updateValue(e.target.value)}
                             >
                                 {question.choices.choices.map((c:string,_idx:number) => (
-                                    <FormControlLabel disabled={disable} value={_idx} control={<Radio />} label={c} />
+                                    <FormControlLabel key={_idx} disabled={disable} value={_idx} control={<Radio />} label={c} />
                                 ))}
                             </RadioGroup>
                         </FormControl>

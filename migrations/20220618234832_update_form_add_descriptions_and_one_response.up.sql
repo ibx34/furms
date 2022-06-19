@@ -1,0 +1,1 @@
+ALTER TABLE forms ADD COLUMN description TEXT, ADD COLUMN one_response BOOLEAN;
