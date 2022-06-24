@@ -80,6 +80,7 @@ const Question = ({
                                     ..._question,
                                     min: n == 0 ? null : n
                                 })}
+                                disable={false}
                             /> 
                             <FormattedInput 
                                 label={"Max"} 
@@ -88,6 +89,7 @@ const Question = ({
                                     ..._question,
                                     max: n == 0 ? null : n
                                 })}
+                                disable={false}
                             /> 
                         </Stack>
                     </Stack>

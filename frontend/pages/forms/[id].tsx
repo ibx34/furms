@@ -1,7 +1,7 @@
 import { Alert, AlertTitle, Button, Dialog, DialogContent, DialogContentText, DialogTitle, Divider, Grid, Paper, Stack, Typography } from '@mui/material'
 import axios from 'axios'
 import type { NextPage } from 'next'
-import { useRouter } from 'next/router'
+import Router, { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import PasswordRequired from '../../components/PasswordRequired'
 import ConnectionRequired from '../../components/ConnectionRequired'
@@ -10,6 +10,7 @@ import SendIcon from '@mui/icons-material/Send';
 import { red, yellow } from '@mui/material/colors'
 import { CircularProgress } from '@mui/material';
 import { QuestionType, FormType } from "../../types/types";
+import FlagIcon from '@mui/icons-material/Flag';
 
 const ShowForm: NextPage = () => {
     const { isReady, query } = useRouter();
@@ -17,6 +18,7 @@ const ShowForm: NextPage = () => {
     const [formRequiresConnection, setFormRequiresConnection] = useState<boolean>(false);
     const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
     const [formFailedConnectionCheck, setformFailedConnectionCheck] = useState<boolean>(false);
+    const [formMaxAttemptsHit, setFormMaxAttemptsHit] = useState<boolean>(false);
     const [processingForm, setProcessingForm] = useState<boolean>(false);
     const [providedFormPassword, setProvidedFormPassword] = useState<string>("");
     const [questionResponses, setQuestionResponses] = useState<{
@@ -34,19 +36,22 @@ const ShowForm: NextPage = () => {
     useEffect(() => {
         if (isReady && !formLoaded) {
             axios.request(
-                { withCredentials: false, method: "get", url: `http://localhost:3001/api/forms/${query.id}` }
+                { withCredentials: false, method: "get", url: `${process.env.NEXT_PUBLIC_API_BASE}/api/forms/${query.id}` }
             ).then((response) => {
                 setForm(response.data)
             }).catch((error) => {
                 if (error.response.status) {
                     switch (error.response.status) {
                         case 401:
-                            if (error.response.data.code) {
+                            if (error.response.data.code !== undefined || error.response.data.code !== null) {
                                 switch (error.response.data.code) {
+                                    case 1:
+                                        Router.push(`/api/oauth2/login?service=discord&redirect_url=${window.location}`);
+                                        break;
+                                        
                                     case 0:
                                         setFormRequiresPassword(true);
-                                    case 1:
-                                        setFormRequiresConnection(true);
+                                        break;
                                 }
                             }
                             break;
@@ -55,6 +60,7 @@ const ShowForm: NextPage = () => {
                                 switch (error.response.data.code) {
                                     case 2: 
                                         setformFailedConnectionCheck(true);
+                                        break;
                                 }
                             }
                             break;
@@ -110,7 +116,7 @@ const ShowForm: NextPage = () => {
         });
         axios.request(
             {
-                withCredentials: false, method: "post", url: `http://localhost:3001/api/forms/${query.id}/respond`,
+                withCredentials: false, method: "post", url: `${process.env.NEXT_PUBLIC_API_BASE}/api/forms/${query.id}/respond`,
                 data: {
                     "responses": true_responses
                 }
@@ -118,13 +124,35 @@ const ShowForm: NextPage = () => {
         ).then((response) => {
             setFormSubmitted(true);
             setProcessingForm(false);
-        }).catch((error) => { });
+        }).catch((error) => {
+            if (error.response.status) {
+                switch (error.response.status) {
+                    case 403:
+                        setFormMaxAttemptsHit(true);
+                        break;
+                }
+            }
+        });
 
     }
 
     return (
         <div>
-            <Dialog open={formFailedConnectionCheck} onClose={() => { }} PaperProps={{elevation: 3, variant: "outlined"}}>
+            <Dialog open={formMaxAttemptsHit} onClose={() => { }} PaperProps={{variant: "outlined"}}>
+                <DialogTitle>
+                    Max amount of responses reached.
+                </DialogTitle>
+
+                <DialogContent>
+                    <Stack direction="column" spacing={2}>
+                        <DialogContentText>
+                            You have reached the maximum amount of allowed responses.
+                        </DialogContentText>
+                    </Stack>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={formFailedConnectionCheck} onClose={() => { }} PaperProps={{variant: "outlined"}}>
                 <DialogTitle>
                     Connection Required
                 </DialogTitle>
@@ -142,7 +170,6 @@ const ShowForm: NextPage = () => {
                 open={formRequiresConnection}
                 handleClose={() => { }}            
             />
-
             <PasswordRequired
                 open={formRequiresPassword}
                 handleClose={() => { }}
@@ -154,7 +181,7 @@ const ShowForm: NextPage = () => {
                             {
                                 withCredentials: false,
                                 method: "get",
-                                url: `http://localhost:3001/api/forms/${query.id}`,
+                                url: `${process.env.NEXT_PUBLIC_API_BASE}/api/forms/${query.id}`,
                                 headers: {
                                     'X-Password': providedFormPassword
                                 }
@@ -177,6 +204,8 @@ const ShowForm: NextPage = () => {
                     }
                 }}
             />
+            
+            {formRequiresPassword}
 
             {form !== undefined ?
                 <Grid container spacing={5} columns={24} direction="row" paddingTop={5}>
@@ -244,7 +273,7 @@ const ShowForm: NextPage = () => {
                                 <Stack spacing={2} direction="row-reverse">
                                     {!processingForm ?
                                         <Button
-                                            variant="outlined"
+                                            variant="contained"
                                             color="primary"
                                             endIcon={<SendIcon />}
                                             onClick={submitResponse}
@@ -255,7 +284,8 @@ const ShowForm: NextPage = () => {
                                         :
                                         <CircularProgress size={24} />
                                     }
-                                    <Button variant="text" color="inherit" disabled={processingForm}>Save as Draft</Button>
+                                    {/* <Button variant="text" color="inherit" disabled={processingForm}>Save as Draft</Button>
+                                    <Button variant="text" color="error" endIcon={<FlagIcon />}>Report Form</Button> */}
                                 </Stack>
                             </Stack>
                             :

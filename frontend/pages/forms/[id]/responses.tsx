@@ -1,4 +1,4 @@
-import { Alert, AlertTitle, Button, Divider, FormControl, Grid, InputLabel, MenuItem, Paper, Select, Stack, Typography } from '@mui/material'
+import { Alert, AlertTitle, Box, Button, Divider, FormControl, Grid, InputLabel, MenuItem, Paper, Select, Stack, Tab, Tabs, Typography } from '@mui/material'
 import axios from 'axios'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
@@ -6,9 +6,11 @@ import { useEffect, useState } from 'react'
 import PasswordRequired from '../../../components/PasswordRequired'
 import Question from '../../../components/Question'
 import SendIcon from '@mui/icons-material/Send';
-import { red, yellow } from '@mui/material/colors'
+import { grey, red, yellow } from '@mui/material/colors'
 import { CircularProgress } from '@mui/material';
 import { QuestionType, FormType, Response } from "../../../types/types";
+import FlagIcon from '@mui/icons-material/Flag';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 
 const ShowFormResponses: NextPage = () => {
     const { isReady, query } = useRouter();
@@ -21,12 +23,13 @@ const ShowFormResponses: NextPage = () => {
     const [form, setForm] = useState<FormType>();
     const [responses, setResponses] = useState<Response[]>([]);
     const [currentResponse, setCurrentResponse] = useState<number>(0);
+    const [tab, setSelectedTab] = useState(0);
 
     useEffect(() => {
         if (isReady) {
             if (isReady && !formLoaded) {
                 axios.request(
-                    { withCredentials: false, method: "get", url: `http://localhost:3001/api/forms/${query.id}` }
+                    { withCredentials: false, method: "get", url: `${process.env.NEXT_PUBLIC_API_BASE}/api/forms/${query.id}` }
                 ).then((response) => {
                     setForm(response.data)
                 }).catch((error) => {
@@ -43,7 +46,7 @@ const ShowFormResponses: NextPage = () => {
 
             if (isReady && formLoaded && !responsesLoaded) {
                 axios.request(
-                    { withCredentials: false, method: "get", url: `http://localhost:3001/api/forms/${query.id}/responses` }
+                    { withCredentials: false, method: "get", url: `${process.env.NEXT_PUBLIC_API_BASE}/api/forms/${query.id}/responses` }
                 ).then((response) => {
                     setResponses(response.data.responses);
                 }).catch((error) => {});
@@ -51,6 +54,36 @@ const ShowFormResponses: NextPage = () => {
             }
         }
     }, [isReady, formLoaded, responsesLoaded, query.id])
+
+    const renderTab = () => {
+        switch (tab) {
+            case 0:
+                if (form) {
+                    return (
+                        <Stack spacing={2}>
+                            { responses[currentResponse] != null ?
+                                <div>
+                                    <Stack spacing={2}>
+                                        { responses[currentResponse].responses.map((response,idx:number) => (
+                                            <Question 
+                                                key={idx}
+                                                question={form.questions[response.id]} 
+                                                startingValue={response.response} 
+                                                disable={true} 
+                                                updateResponse={function (question: number, input: string | number | boolean): void {} } 
+                                                deleteResponseKey={function (question: number): void {} }
+                                            />
+                                        ))}
+                                    </Stack>
+                                </div>
+                                :
+                                null
+                            }
+                        </Stack>
+                    )
+                }
+        }
+    }
 
     return (
         <div>
@@ -65,7 +98,7 @@ const ShowFormResponses: NextPage = () => {
                             {
                                 withCredentials: false,
                                 method: "get",
-                                url: `http://localhost:3001/api/forms/${query.id}`,
+                                url: `${process.env.NEXT_PUBLIC_API_BASE}/api/forms/${query.id}`,
                                 headers: {
                                     'X-Password': providedFormPassword
                                 }
@@ -94,14 +127,46 @@ const ShowFormResponses: NextPage = () => {
                     <Grid item xs />
                     <Grid item xs={12}>
                         <Stack spacing={4}>
-                            <Paper variant="outlined" elevation={8}>
+                            <Paper variant="outlined">
                                 <Stack spacing={3} padding={2}>
                                     <div>
                                         <Typography variant="h5" component="div">
                                             Responses for &quot;<strong>{form.name}</strong>&quot;
                                         </Typography>
+                                        <Typography variant="body2" component="div">
+                                            <strong>{responses.length}</strong> responses<br/>
+                                            { responses[currentResponse] != null ? 
+                                                <div>
+                                                    Submitted at <strong>{new Date(responses[currentResponse].submitted_at).toString()}</strong>
+                                                </div>
+                                                : null                                            
+                                            }
+                                        </Typography>
                                     </div>
+
+                                    <Stack spacing={2} direction={"row"}>
+                                        <Button variant="outlined" size="small" color="error" endIcon={<FlagIcon />}>Report Response</Button>
+                                        <Button 
+                                            variant="outlined" 
+                                            size="small" 
+                                            color="primary" 
+                                            endIcon={<CloudDownloadIcon />}
+                                            onClick={(_) => {
+                                                if (responses[currentResponse]) {
+                                                    window.open(`${process.env.NEXT_PUBLIC_API_BASE}/api/forms/${query.id}/responses/${responses[currentResponse].id}`)
+                                                }
+                                            }}
+                                        >
+                                            Download
+                                        </Button>
+                                    </Stack>
                                 </Stack>
+                            </Paper>
+                            <Paper variant="outlined">
+                                <Tabs value={tab} onChange={(event: React.SyntheticEvent, newValue: number) => setSelectedTab(newValue)} centered>
+                                    <Tab label="Responses" />
+                                    <Tab label="Current Response Author" />
+                                </Tabs>
                             </Paper>
                             <Divider>
                                 <Stack spacing={1} direction="row">
@@ -110,7 +175,7 @@ const ShowFormResponses: NextPage = () => {
                                         color="primary"
                                         onClick={(_) => {
                                             if (responses && responses[currentResponse-1]) {
-                                                setCurrentResponse(currentResponse-1)
+                                                setCurrentResponse(currentResponse-1);
                                             }
                                         }}
                                     >
@@ -121,7 +186,7 @@ const ShowFormResponses: NextPage = () => {
                                         color="primary"
                                         onClick={(_) => {
                                             if (responses && responses[currentResponse+1]) {
-                                                setCurrentResponse(currentResponse+1)
+                                                setCurrentResponse(currentResponse+1);
                                             }
                                         }}
                                     >
@@ -129,25 +194,35 @@ const ShowFormResponses: NextPage = () => {
                                     </Button>
                                 </Stack>
                             </Divider>
-
-                            { responses[currentResponse] != null ?
-                                <div>
-                                    <Stack spacing={2}>
-                                        { responses[currentResponse].responses.map((response,idx:number) => (
-                                            <Question 
-                                                key={idx}
-                                                question={form.questions[response.id]} 
-                                                startingValue={response.response} 
-                                                disable={true} 
-                                                updateResponse={function (question: number, input: string | number | boolean): void {} } 
-                                                deleteResponseKey={function (question: number): void {} }
-                                            />
-                                        ))}
-                                    </Stack>
-                                </div>
-                                :
-                                null
-                            }
+                            {() => {
+                                        switch (tab) {
+                                            case 0:
+                                                if (form) {
+                                                    return (
+                                                        <Stack spacing={2}>
+                                                            { responses[currentResponse] != null ?
+                                                                <div>
+                                                                    <Stack spacing={2}>
+                                                                        { responses[currentResponse].responses.map((response,idx:number) => (
+                                                                            <Question 
+                                                                                key={idx}
+                                                                                question={form.questions[response.id]} 
+                                                                                startingValue={response.response} 
+                                                                                disable={true} 
+                                                                                updateResponse={function (question: number, input: string | number | boolean): void {} } 
+                                                                                deleteResponseKey={function (question: number): void {} }
+                                                                            />
+                                                                        ))}
+                                                                    </Stack>
+                                                                </div>
+                                                                :
+                                                                null
+                                                            }
+                                                        </Stack>
+                                                    )
+                                                }
+                                        }
+                            }}
                         </Stack>
                     </Grid>
                     <Grid item xs />

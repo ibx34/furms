@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"furms.dev/config"
 	"github.com/golang-jwt/jwt"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -31,20 +32,26 @@ type QuestionResponse struct {
 }
 
 type Form struct {
-	FormId          uint64              `db:"form_id" json:"form_id"`
+	FormId          string              `db:"form_id" json:"form_id"`
 	FormName        string              `db:"name" json:"name"`
-	FormPassword    *string             `db:"password"  json:"password"`
 	FormDescription *string             `db:"description" json:"description"`
+	FormPassword    *string             `db:"password"  json:"password"`
 	FormQuestions   []FormQuestion      `json:"questions"`
 	FormQQuestions  pgtype.JSONBArray   `db:"questions" json:"-"`
+	FormReqAuth     *bool               `db:"require_auth" json:"require_auth"`
 	FormReqConns    pgtype.VarcharArray `db:"required_connections" json:"-"`
+	FormCreatedAt   *time.Time          `db:"created_at" json:"created_at"`
+	FormCreatedBy   uint64              `db:"created_by" json:"created_by"`
+	FormUpdatedAt   *time.Time          `db:"updated_at" json:"updated_at"`
+	FormRespLimit   *uint64             `db:"response_limit" json:"resp_limit"`
 }
 
 type FormResponse struct {
 	ResponseId     uint64             `db:"id" json:"id"`
-	ResponseFormId uint64             `db:"form_id" json:"form_id"`
-	ResponseTime   time.Time          `db:"response_at" json:"response_at"`
+	ResponseFormId string             `db:"form_id" json:"form_id"`
+	ResponseBy     *uint64            `db:"submitted_by" json:"submitted_by"`
 	DBResponses    pgtype.JSONBArray  `db:"responses" json:"-"`
+	ResponseTime   time.Time          `db:"submitted_at" json:"submitted_at"`
 	Responses      []QuestionResponse `db:"-" json:"responses"`
 }
 
@@ -87,10 +94,12 @@ type GetResponsesResponse struct {
 type App struct {
 	Context  context.Context
 	Database *pgxpool.Pool
+	Config   config.Config
 }
 
 type OAuth2Claims struct {
-	Service string `json:"service"`
+	Service     string `json:"service"`
+	RedirectUri string `json:"redirect_uri"`
 	jwt.StandardClaims
 }
 

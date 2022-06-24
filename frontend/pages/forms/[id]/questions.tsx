@@ -29,7 +29,7 @@ const UpdateFormQuestions: NextPage = () => {
     useEffect(() => {		
         if (isReady && !formLoaded) {
             axios.request(
-                {withCredentials: false, method:"get",url:`http://localhost:3001/api/forms/${query.id}`}
+                {withCredentials: false, method:"get",url:`${process.env.NEXT_PUBLIC_API_BASE}/api/forms/${query.id}`}
             ).then((response) => {
                 setForm(response.data);
                 if (response.data.questions != null) {
@@ -95,7 +95,7 @@ const UpdateFormQuestions: NextPage = () => {
 
     const saveQuestions = () => {
         axios.request(
-            {withCredentials: false, method:"patch",url:`http://localhost:3001/api/forms/${query.id}/questions`,data: {
+            {withCredentials: false, method:"patch",url:`${process.env.NEXT_PUBLIC_API_BASE}/api/forms/${query.id}/questions`,data: {
                 "questions": newQuestions
             }}
         ).then((response) => {
@@ -129,7 +129,7 @@ const UpdateFormQuestions: NextPage = () => {
                             {
                                 withCredentials: false, 
                                 method:"get",
-                                url:`http://localhost:3001/api/forms/${query.id}`,
+                                url:`${process.env.NEXT_PUBLIC_API_BASE}/api/forms/${query.id}`,
                                 headers: {
                                     'X-Password': providedFormPassword
                                 }

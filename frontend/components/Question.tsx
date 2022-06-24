@@ -99,7 +99,7 @@ const Question = ({
                         label={"Number"}
                         number={value}
                         onChange={(e) => updateValue(e)}
-                        // disabled={disable}
+                        disable={disable}
                         // error={error}                    
                     />)
                 }

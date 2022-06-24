@@ -8,12 +8,18 @@ import (
 	"os"
 	"time"
 
+	"furms.dev/config"
 	"furms.dev/internal"
+	sq "github.com/Masterminds/squirrel"
 	"github.com/golang-migrate/migrate/v4"
 	PgxMigration "github.com/golang-migrate/migrate/v4/database/pgx"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/joho/godotenv"
+)
+
+var (
+	UsingDollarSigns = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 )
 
 func main() {
@@ -63,5 +69,10 @@ func main() {
 	}
 
 	defer dbConn.Close()
-	defer internal.StartApi(ctx, dbConn)
+	config, err := config.New()
+	if err != nil {
+		fmt.Println("Failed to create config: ", err)
+		return
+	}
+	defer internal.StartApi(ctx, dbConn, config)
 }

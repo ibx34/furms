@@ -12,7 +12,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 const PasswordRequired = ({open, password, setPassword, handleClose, handleSubmit}: { open: boolean, password: string, setPassword: (arg0: string) => void, handleClose: () => void, handleSubmit: () => void}) => {
     return (
-        <Dialog open={open} onClose={handleClose} PaperProps={{elevation: 3, variant: "outlined"}}>
+        <Dialog open={open} onClose={handleClose} PaperProps={{variant: "outlined"}}>
             <DialogTitle>
                 Password Required
             </DialogTitle>
