@@ -245,6 +245,24 @@ const Question = ({
                         <MenuItem value={2}>Choice</MenuItem>
                     </Select>
                 </FormControl>
+                <div>
+                    <FormControlLabel 
+                        control={
+                            <Switch 
+                                value={_question.required == null ? false : true}
+                                checked={_question.required == null ? false : true} 
+                                onChange={(e) => {
+                                    updateQuestionn({
+                                        ..._question,
+                                        required: e.target.checked
+                                    });
+                                }} 
+                            />
+                        } 
+                        label="Required" 
+                    />
+                </div>
+
                 {renderSubOptions()}
             </Stack>
         </Paper>

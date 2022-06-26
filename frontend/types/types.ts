@@ -19,12 +19,18 @@ export interface QuestionType {
   description: string,
   min: number | null,
   max: number | null,
-  choices: ChoicesType | null
+  choices: ChoicesType | null,
+  required: boolean | null
 }
 
 export interface ChoicesType {
   multiple_sections: boolean,
   choices: string[] | null
+}
+
+export interface ResponseAccess {
+  service: string,
+  id: string
 }
 
 export interface Response {

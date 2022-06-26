@@ -86,7 +86,8 @@ const UpdateFormQuestions: NextPage = () => {
                 description: "",
                 min: null,
                 max: null,
-                choices: null
+                choices: null,
+                required: null
             };
     
             setNewQuestions([...newQuestions, question]);

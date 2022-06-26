@@ -92,6 +92,18 @@ const ShowForm: NextPage = () => {
                 message: "Cannot submit an empty form."
             });
         }
+
+        if (form) {
+            for (let question of form.questions) {
+                if (question.required && !Object.keys(questionResponses).includes(question.id.toString())) {
+                    final_errors.push({
+                        code: 1,
+                        message: `Missing required question: "${question.name}"`
+                    });                    
+                }
+            }       
+        }
+
         return final_errors;
     }
 

@@ -33,18 +33,17 @@ type FormQuestion struct {
 }
 
 type Form struct {
-	Id          string              `db:"form_id" json:"form_id"`
-	Name        string              `db:"name" json:"name"`
-	Description *string             `db:"description" json:"description"`
-	Password    *string             `db:"password"  json:"password"`
-	Questions   []FormQuestion      `json:"questions"`
-	QQuestions  pgtype.JSONBArray   `db:"questions" json:"-"`
-	ReqAuth     *bool               `db:"require_auth" json:"require_auth"`
-	ReqConns    pgtype.VarcharArray `db:"required_connections" json:"-"`
-	CreatedAt   *time.Time          `db:"created_at" json:"created_at"`
-	CreatedBy   uint64              `db:"created_by" json:"created_by"`
-	UpdatedAt   *time.Time          `db:"updated_at" json:"updated_at"`
-	RespLimit   *uint64             `db:"response_limit" json:"resp_limit"`
+	Id          string            `db:"form_id" json:"form_id"`
+	Name        string            `db:"name" json:"name"`
+	Description *string           `db:"description" json:"description"`
+	Password    *string           `db:"password"  json:"password"`
+	Questions   []FormQuestion    `json:"questions"`
+	QQuestions  pgtype.JSONBArray `db:"questions" json:"-"`
+	ReqAuth     *bool             `db:"require_auth" json:"require_auth"`
+	CreatedAt   *time.Time        `db:"created_at" json:"created_at"`
+	CreatedBy   uint64            `db:"created_by" json:"created_by"`
+	UpdatedAt   *time.Time        `db:"updated_at" json:"updated_at"`
+	RespLimit   *uint64           `db:"response_limit" json:"resp_limit"`
 }
 
 func (form *Form) NewForm(

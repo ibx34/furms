@@ -16,6 +16,7 @@ import RadioGroup from '@mui/material/RadioGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
+import { red } from '@mui/material/colors';
 
 const Question = ({
     question,
@@ -127,7 +128,13 @@ const Question = ({
             <Stack spacing={2} padding={2}>
                 <div>
                     <Typography variant="h5" component="div">
-                        {question.name}
+                        {question.name} { question.required != null ? <>
+                            { question.required ? 
+                                <span style={{"color": red[400]}}>&#42;</span>
+                                :
+                                null
+                            }
+                        </> : null }
                     </Typography>
                     <Typography variant="body1" component="div">
                         {question.description}

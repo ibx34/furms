@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -223,6 +224,8 @@ func (app_context *App) get_login(c *gin.Context) {
 }
 
 func (app_context *App) download_form_response(c *gin.Context) {
+	// Check if the user requests responses can actually access them.
+
 	form_id, response_id := c.Params.ByName("form_id"), c.Params.ByName("rid")
 	if len(form_id) == 0 {
 		return
@@ -259,6 +262,8 @@ func (app_context *App) download_form_response(c *gin.Context) {
 }
 
 func (app_context *App) get_form_responses(c *gin.Context) {
+	// Check if the user requests responses can actually access them.
+
 	form_id := c.Params.ByName("form_id")
 	if len(form_id) == 0 {
 		return
@@ -400,6 +405,12 @@ func (app_context *App) create_form_response(c *gin.Context) {
 }
 
 func (app_context *App) create_form_question(c *gin.Context) {
+	_, _err := GetSessionUser(c, app_context)
+	if _err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
 	form_id := c.Params.ByName("form_id")
 	if len(form_id) == 0 {
 		return
@@ -411,10 +422,15 @@ func (app_context *App) create_form_question(c *gin.Context) {
 		return
 	}
 	form := Form{}
-	err := app_context.Database.QueryRow(app_context.Context, query, args...).Scan(&form.FormId, &form.FormName, &form.FormPassword, &form.FormDescription, &form.FormQQuestions, &form.FormReqConns)
+	err := app_context.Database.QueryRow(app_context.Context, query, args...).Scan(&form.FormId, &form.FormName, &form.FormPassword, &form.FormDescription, &form.FormQQuestions)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "1/.QueryRow failed: %v\n", err)
 	}
+
+	// if form.FormCreatedBy != user.Id {
+	// 	c.Status(http.StatusForbidden)
+	// 	return
+	// }
 
 	var questions []FormQuestion
 	for _, q := range form.FormQQuestions.Elements {
@@ -462,7 +478,7 @@ func (app_context *App) create_form_question(c *gin.Context) {
 		fmt.Println(errQueryArgs)
 		return
 	}
-	err = app_context.Database.QueryRow(app_context.Context, query, args...).Scan(&form.FormId, &form.FormName, &form.FormPassword, &form.FormDescription, &form.FormQQuestions, &form.FormReqConns)
+	err = app_context.Database.QueryRow(app_context.Context, query, args...).Scan(&form.FormId, &form.FormName, &form.FormPassword, &form.FormDescription, &form.FormQQuestions)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "1/.QueryRow failed: %v\n", err)
 	}
@@ -572,12 +588,41 @@ func (app_context *App) get_form(c *gin.Context) {
 }
 
 func (app_context *App) create_form(c *gin.Context) {
+	user, _err := GetSessionUser(c, app_context)
+	if _err != nil {
+		c.JSON(http.StatusBadRequest, Response{Message: _err.Message})
+		return
+	}
+
 	// Check if creating forms is disabled for everyone.
 	if app_context.Config.Forms != nil &&
 		(app_context.Config.Forms.AnyoneCanCreate != nil &&
 			!*app_context.Config.Forms.AnyoneCanCreate) {
-		c.Status(http.StatusForbidden)
-		return
+
+		allowed_to_create := false
+		if app_context.Config.Forms.AllowedCreators != nil &&
+			len(*app_context.Config.Forms.AllowedCreators) > 0 {
+		out:
+			for _, allowed_user := range *app_context.Config.Forms.AllowedCreators {
+				switch allowed_user.Service {
+				case "discord":
+					if user.DiscordId != nil && allowed_user.Id == strconv.FormatUint(*user.DiscordId, 10) {
+						allowed_to_create = true
+						break out
+					}
+				case "furms":
+					if allowed_user.Id == strconv.FormatUint(user.Id, 10) {
+						allowed_to_create = true
+						break out
+					}
+				}
+			}
+		}
+
+		if !allowed_to_create {
+			c.Status(http.StatusForbidden)
+			return
+		}
 	}
 
 	type CreateFormRequest struct {
@@ -600,7 +645,7 @@ func (app_context *App) create_form(c *gin.Context) {
 		new_form.Description,
 		new_form.Password,
 		new_form.RequiresAuth,
-		1,
+		user.Id,
 		new_form.RespLimit,
 		false,
 		app_context.Database,

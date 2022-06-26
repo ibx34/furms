@@ -194,35 +194,27 @@ const ShowFormResponses: NextPage = () => {
                                     </Button>
                                 </Stack>
                             </Divider>
-                            {() => {
-                                        switch (tab) {
-                                            case 0:
-                                                if (form) {
-                                                    return (
-                                                        <Stack spacing={2}>
-                                                            { responses[currentResponse] != null ?
-                                                                <div>
-                                                                    <Stack spacing={2}>
-                                                                        { responses[currentResponse].responses.map((response,idx:number) => (
-                                                                            <Question 
-                                                                                key={idx}
-                                                                                question={form.questions[response.id]} 
-                                                                                startingValue={response.response} 
-                                                                                disable={true} 
-                                                                                updateResponse={function (question: number, input: string | number | boolean): void {} } 
-                                                                                deleteResponseKey={function (question: number): void {} }
-                                                                            />
-                                                                        ))}
-                                                                    </Stack>
-                                                                </div>
-                                                                :
-                                                                null
-                                                            }
-                                                        </Stack>
-                                                    )
-                                                }
-                                        }
-                            }}
+
+                            <Stack spacing={2}>
+                                { responses[currentResponse] != null ?
+                                    <div>
+                                        <Stack spacing={2}>
+                                            { responses[currentResponse].responses.map((response,idx:number) => (
+                                                <Question 
+                                                    key={idx}
+                                                    question={form.questions[response.id]} 
+                                                    startingValue={response.response} 
+                                                    disable={true} 
+                                                    updateResponse={function (question: number, input: string | number | boolean): void {} } 
+                                                    deleteResponseKey={function (question: number): void {} }
+                                                />
+                                            ))}
+                                        </Stack>
+                                    </div>
+                                    :
+                                    null
+                                }
+                            </Stack>
                         </Stack>
                     </Grid>
                     <Grid item xs />

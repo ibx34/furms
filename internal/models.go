@@ -24,6 +24,7 @@ type FormQuestion struct {
 	QMinValue    *uint64             `db:"-" json:"min"`
 	QMaxValue    *uint64             `db:"-" json:"max"`
 	QChoice      *ChoiceQuestionType `db:"-" json:"choices"`
+	QRequired    *bool               `db:"-" json:"required"`
 }
 
 type QuestionResponse struct {
@@ -32,18 +33,17 @@ type QuestionResponse struct {
 }
 
 type Form struct {
-	FormId          string              `db:"form_id" json:"form_id"`
-	FormName        string              `db:"name" json:"name"`
-	FormDescription *string             `db:"description" json:"description"`
-	FormPassword    *string             `db:"password"  json:"password"`
-	FormQuestions   []FormQuestion      `json:"questions"`
-	FormQQuestions  pgtype.JSONBArray   `db:"questions" json:"-"`
-	FormReqAuth     *bool               `db:"require_auth" json:"require_auth"`
-	FormReqConns    pgtype.VarcharArray `db:"required_connections" json:"-"`
-	FormCreatedAt   *time.Time          `db:"created_at" json:"created_at"`
-	FormCreatedBy   uint64              `db:"created_by" json:"created_by"`
-	FormUpdatedAt   *time.Time          `db:"updated_at" json:"updated_at"`
-	FormRespLimit   *uint64             `db:"response_limit" json:"resp_limit"`
+	FormId          string            `db:"form_id" json:"form_id"`
+	FormName        string            `db:"name" json:"name"`
+	FormDescription *string           `db:"description" json:"description"`
+	FormPassword    *string           `db:"password"  json:"password"`
+	FormQuestions   []FormQuestion    `json:"questions"`
+	FormQQuestions  pgtype.JSONBArray `db:"questions" json:"-"`
+	FormReqAuth     *bool             `db:"require_auth" json:"require_auth"`
+	FormCreatedAt   *time.Time        `db:"created_at" json:"created_at"`
+	FormCreatedBy   uint64            `db:"created_by" json:"created_by"`
+	FormUpdatedAt   *time.Time        `db:"updated_at" json:"updated_at"`
+	FormRespLimit   *uint64           `db:"response_limit" json:"resp_limit"`
 }
 
 type FormResponse struct {
@@ -89,6 +89,10 @@ type CreateQuestionResponse struct {
 
 type GetResponsesResponse struct {
 	Responses []FormResponse `json:"responses"`
+}
+
+type GetMyFormsResponse struct {
+	Forms []Form `json:"forms"`
 }
 
 type App struct {

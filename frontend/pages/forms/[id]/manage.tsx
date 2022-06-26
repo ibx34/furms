@@ -9,12 +9,13 @@ import EditQuestion from '../../../components/EditQuestion'
 import SendIcon from '@mui/icons-material/Send';
 import { red } from '@mui/material/colors'
 import { CircularProgress } from '@mui/material';
-import { QuestionType, FormType } from "../../../types/types";
+import { QuestionType, FormType, ResponseAccess } from "../../../types/types";
 import cookie from "cookie";
 import DrawerNav from '../../../components/DrawerNav'
 import FormattedInput from '../../../components/NumberInput'
 import SaveIcon from '@mui/icons-material/Save';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
+import AddIcon from '@mui/icons-material/Add';
 
 const UpdateFormQuestions = ({session}:{session: string}) => {
     const { isReady, query } = useRouter();
@@ -70,7 +71,7 @@ const UpdateFormQuestions = ({session}:{session: string}) => {
         if (form) {
             switch (currentPage) {
                 case 0:
-                    return (<Grid container spacing={5} columns={24} direction="row">
+                    return (<Grid container spacing={5} columns={24}>
                         <Grid item xs>
                             <Paper variant="outlined">
                                 <Stack spacing={3} padding={2}>
@@ -161,8 +162,42 @@ const UpdateFormQuestions = ({session}:{session: string}) => {
                                     </Stack>
                                 </Stack>
                             </Paper>
-                            {JSON.stringify(form)}
                         </Grid>
+
+                        <Grid item xs>
+                            <Paper variant="outlined">
+                                <Stack spacing={3} padding={2}>
+                                    <div>
+                                        <Typography variant="h5" component="div">
+                                            General Information
+                                        </Typography>
+                                        <Typography variant="body1" component="div">
+                                            General information regarding this form. And some options to make the form public,
+                                            close submissions, and change the name/description.
+                                        </Typography>
+                                    </div>
+                                    
+                                    <Stack spacing={4}>
+                                        <TextField 
+                                            label="name" 
+                                            value={form.name}
+                                            onChange={(e) => updateForm({...form, name: e.target.value})}
+                                            variant="outlined"
+                                        />
+
+                                        <TextField 
+                                            label="description" 
+                                            value={form.description}
+                                            onChange={(e) => updateForm({...form, description: e.target.value})}                                            
+                                            variant="outlined"
+                                            multiline
+                                        />  
+                                    </Stack>
+                                </Stack>
+                            </Paper>
+                            {/* {JSON.stringify(form)} */}
+                        </Grid>
+
                     </Grid>)
                 case 1:
                     return (<div>Its the questions page!</div>)
@@ -174,7 +209,7 @@ const UpdateFormQuestions = ({session}:{session: string}) => {
                 <AppBar
                     position="fixed"
                     elevation={0}
-                    color="transparent"
+                    color="secondary"
                     sx={{
                         width: { sm: `calc(100% - ${240}px)` },
                         ml: { sm: `${240}px` },
@@ -185,8 +220,8 @@ const UpdateFormQuestions = ({session}:{session: string}) => {
                             Managing a form
                         </Typography>
                         <Stack direction="row" spacing={2}>
-                            <Button variant="outlined" size="small" color="inherit" endIcon={<RemoveRedEyeIcon />}>View</Button>
-                            <Button variant="contained" size="small" color="success" endIcon={<SaveIcon />}>Save</Button>
+                            <Button variant="contained" size="medium" color="secondary" endIcon={<RemoveRedEyeIcon />}>View</Button>
+                            <Button variant="contained" size="medium" color="success" endIcon={<SaveIcon />}>Save</Button>
                         </Stack>
                     </Toolbar>
                     <Divider/>
