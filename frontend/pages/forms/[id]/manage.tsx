@@ -138,7 +138,7 @@ const UpdateFormQuestions = ({session}:{session: string}) => {
                                             {form.require_auth ? 
                                                 <Stack spacing={2}>
                                                     <Typography variant="body1" component="div">
-                                                        When a user is required to login they will be reidrect to a Discord page to login and returned back to your form.
+                                                        When a user is required to login they will be reidrected to a Discord page to login and returned back to your form.
                                                         Enabling this will allow you to also enable: Response limits, and Connection Requirements.
                                                     </Typography>
     
@@ -177,7 +177,7 @@ const UpdateFormQuestions = ({session}:{session: string}) => {
                                         </Typography>
                                     </div>
                                     
-                                    <Stack spacing={4}>
+                                    <Stack spacing={2}>
                                         <TextField 
                                             label="name" 
                                             value={form.name}
@@ -220,8 +220,19 @@ const UpdateFormQuestions = ({session}:{session: string}) => {
                             Managing a form
                         </Typography>
                         <Stack direction="row" spacing={2}>
-                            <Button variant="contained" size="medium" color="secondary" endIcon={<RemoveRedEyeIcon />}>View</Button>
-                            <Button variant="contained" size="medium" color="success" endIcon={<SaveIcon />}>Save</Button>
+                            <Button 
+                                variant="contained" 
+                                size="small" 
+                                color="secondary" 
+                                endIcon={<RemoveRedEyeIcon />}
+                                disabled={form == null}
+                                onClick={(_) =>{ if (form) {
+                                    window.open(`/forms/${form.form_id}`, "_");
+                                }}}
+                             >
+                                View
+                            </Button>
+                            <Button variant="contained" size="small" color="success" endIcon={<SaveIcon />}>Save</Button>
                         </Stack>
                     </Toolbar>
                     <Divider/>

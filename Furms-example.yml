@@ -1,0 +1,16 @@
+database_url: "..."
+jwt_secret: "..."
+
+discord:
+  enabled: true
+  app_id: 00000000000000000
+  redirect_uri: "..."
+  public_key: "..."
+  secret: "..."
+  auth_link: "..."
+
+forms:
+  anyone_can_create: true
+  max_questions: 60
+  allow_passwords: true
+  allow_required_auth: true

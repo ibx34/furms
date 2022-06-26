@@ -41,7 +41,7 @@ const MyForms = ({session}: {session: null | string}) => {
                         {forms.map((form,idx) => (
                             <Paper variant={"outlined"} key={idx}>
                                 <Stack spacing={2} padding={2} direction="row">
-                                    <Typography variant="h6">{form.name}</Typography>
+                                    <Typography variant="h6" gutterBottom={false}>{form.name}</Typography>
                                     <div>
                                         <Tooltip title="Manage this form">
                                             <IconButton onClick={(_) => Router.push(`/forms/${form.form_id}/manage`)}>
