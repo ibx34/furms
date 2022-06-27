@@ -117,6 +117,14 @@ const UpdateFormQuestions: NextPage = () => {
         newQuestions[index] = question;
     }
 
+    const deleteQuestion = (index: number) => {
+        if (newQuestions[index]) {
+            newQuestions.splice(index, 1);
+            console.log(newQuestions);
+            setNewQuestions([...newQuestions]);
+        }
+    }
+
     return (
         <div>
             <PasswordRequired 
@@ -155,7 +163,7 @@ const UpdateFormQuestions: NextPage = () => {
             />
 
 
-            <Grid container spacing={5} columns={24} direction="row" paddingTop={5}>
+            <Grid container spacing={5} columns={24} direction="row" padding={5}>
                 <Grid item xs />
                     <Grid item xs={12}>
                         <Stack spacing={4}>
@@ -192,9 +200,9 @@ const UpdateFormQuestions: NextPage = () => {
                                             </Button>
                                         </Divider>
 
-                                        { loadQuestions() != null ?
-                                            <>{loadQuestions().map((question: QuestionType, index: number) => (
-                                                <EditQuestion key={index} question={newQuestions[index]} index={index} disable={false} updateQuestion={updateQuestions}/>
+                                        { newQuestions != null ?
+                                            <>{newQuestions.map((question: QuestionType, index: number) => (
+                                                <EditQuestion key={index} question={newQuestions[index]} index={index} disable={false} updateQuestion={updateQuestions} deleteQuestion={deleteQuestion}/>
                                             ))}</>
                                             :
                                             null

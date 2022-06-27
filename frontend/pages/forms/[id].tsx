@@ -1,4 +1,4 @@
-import { Alert, AlertTitle, Button, Dialog, DialogContent, DialogContentText, DialogTitle, Divider, Grid, Paper, Stack, Typography } from '@mui/material'
+import { Alert, AlertTitle, Button, Dialog, DialogContent, DialogContentText, DialogTitle, Divider, Grid, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material'
 import axios from 'axios'
 import type { NextPage } from 'next'
 import Router, { useRouter } from 'next/router'
@@ -11,12 +11,15 @@ import { red, yellow } from '@mui/material/colors'
 import { CircularProgress } from '@mui/material';
 import { QuestionType, FormType } from "../../types/types";
 import FlagIcon from '@mui/icons-material/Flag';
+import ShareIcon from '@mui/icons-material/Share';
+import { Check } from '@mui/icons-material'
 
 const ShowForm: NextPage = () => {
     const { isReady, query } = useRouter();
     const [formRequiresPassword, setFormRequiresPassword] = useState<boolean>(false);
     const [formRequiresConnection, setFormRequiresConnection] = useState<boolean>(false);
     const [formSubmitted, setFormSubmitted] = useState<boolean>(false);
+    const [formLinkCopied, setFormLinkCopied] = useState<boolean>(false);
     const [formFailedConnectionCheck, setformFailedConnectionCheck] = useState<boolean>(false);
     const [formMaxAttemptsHit, setFormMaxAttemptsHit] = useState<boolean>(false);
     const [processingForm, setProcessingForm] = useState<boolean>(false);
@@ -220,7 +223,7 @@ const ShowForm: NextPage = () => {
             {formRequiresPassword}
 
             {form !== undefined ?
-                <Grid container spacing={5} columns={24} direction="row" paddingTop={5}>
+                <Grid container spacing={5} columns={24} direction="row" padding={5}>
                     <Grid item xs />
                     <Grid item xs={12}>
                         {!formSubmitted ?
@@ -240,17 +243,38 @@ const ShowForm: NextPage = () => {
 
                                 <Paper variant="outlined" elevation={8}>
                                     <Stack spacing={1} padding={3}>
-                                        <Typography variant="h5" component="div">
-                                            {form.name}
-                                        </Typography>
-                                        <Typography variant="body1" component="div">
-                                            {form.description}
-                                        </Typography>
-                                        <Stack spacing={2}>
-                                            <Divider />
-                                            <Typography variant="body1" component="div" color={red[500]}>
-                                                Never give forms your password or any other sensitive information.
+                                        <div>
+                                            <Typography variant="h5" component="div">
+                                                {form.name}
                                             </Typography>
+                                            <Typography variant="body1" component="div">
+                                                {form.description}
+                                            </Typography>
+                                            <Stack spacing={2}>
+                                                <Divider />
+                                                <Typography variant="body1" component="div" color={red[500]}>
+                                                    Never give forms your password or any other sensitive information.
+                                                </Typography>
+                                            </Stack>
+                                        </div>
+
+                                        <Stack spacing={2} direction={"row"}>
+                                            <Button variant="outlined" size="small" color="error" endIcon={<FlagIcon />}>Report</Button>
+                                            <Tooltip title={formLinkCopied ? "Copied" : "Share this form with your friends"} open={formLinkCopied}>
+                                                <IconButton size="small" onClick={(_) => {
+                                                    navigator.clipboard.writeText(`${window.location}`);
+                                                    setFormLinkCopied(true);
+                                                    setTimeout(() => {
+                                                        setFormLinkCopied(false);
+                                                    }, 2000)
+                                                }}>
+                                                    { formLinkCopied ?
+                                                        <Check />
+                                                        :
+                                                        <ShareIcon />
+                                                    }
+                                                </IconButton>
+                                            </Tooltip>
                                         </Stack>
                                     </Stack>
                                 </Paper>
@@ -264,6 +288,8 @@ const ShowForm: NextPage = () => {
                                                 case 1:
                                                     return 0;
                                                 case 2:
+                                                    return "";
+                                                case 3:
                                                     return "";
                                             }
                                             return undefined

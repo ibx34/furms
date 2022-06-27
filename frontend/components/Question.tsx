@@ -6,7 +6,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { useState } from 'react';
-import { Divider, IconButton, Paper, Typography } from '@mui/material';
+import { Checkbox, Divider, FormGroup, IconButton, Paper, Typography } from '@mui/material';
 import { DialogContentText, Stack } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import FormattedInput from './NumberInput';
@@ -83,24 +83,25 @@ const Question = ({
     const renderInput = () => {
         switch (question.type) {
             case 0:
+            case 4:
                 return (
                     <TextField 
-                        variant="outlined"
-                        label="Text"
+                        variant="standard"
                         value={value}
                         onChange={(e) => updateValue(e.target.value)}
                         disabled={disable}
                         error={error}
                         helperText={decideError()}
+                        fullWidth={question.type == 4}
                     />
                 )
             case 1:
                 if (typeof value == "number") {
                     return (<FormattedInput
-                        label={"Number"}
                         number={value}
                         onChange={(e) => updateValue(e)}
-                        disable={disable}
+                        disable={disable} 
+                        label={null}                        
                         // error={error}                    
                     />)
                 }
@@ -119,12 +120,24 @@ const Question = ({
                         </FormControl>
                     )
                 }
+            case 3:
+                if (typeof value == "string" && question.choices && question.choices.choices) {
+                    return (
+                        <FormControl>
+                            <FormGroup>
+                                {question.choices.choices.map((c:string,_idx:number) => (
+                                    <FormControlLabel key={_idx} disabled={disable} value={_idx} control={<Checkbox />} label={c} />
+                                ))}
+                            </FormGroup>
+                        </FormControl>
+                    )
+                }
         }
         return (<>Error...</>)
     }
 
     return (
-        <Paper variant="outlined" elevation={8}>
+        <Paper variant="outlined">
             <Stack spacing={2} padding={2}>
                 <div>
                     <Typography variant="h5" component="div">

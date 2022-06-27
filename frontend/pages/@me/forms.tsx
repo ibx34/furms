@@ -12,6 +12,7 @@ import axios from 'axios'
 import SettingsIcon from '@mui/icons-material/Settings';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RemoveRedEyeIcon from '@mui/icons-material/RemoveRedEye';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 
 const MyForms = ({session}: {session: null | string}) => {
     const { isReady, query } = useRouter();
@@ -51,6 +52,11 @@ const MyForms = ({session}: {session: null | string}) => {
                                         <Tooltip title="View this form">
                                             <IconButton onClick={(_) => Router.push(`/forms/${form.form_id}`)}>
                                                 <RemoveRedEyeIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="View this form's responses">
+                                            <IconButton onClick={(_) => Router.push(`/forms/${form.form_id}/responses`)}>
+                                                <ListAltIcon />
                                             </IconButton>
                                         </Tooltip>
                                         <Tooltip title="Delete this form">

@@ -6,7 +6,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import { useState, useEffect } from 'react';
-import { Divider, FormControlLabel, IconButton, InputLabel, Paper, Switch, Typography } from '@mui/material';
+import { Divider, FormControlLabel, IconButton, InputLabel, Menu, Paper, Switch, Toolbar, Typography } from '@mui/material';
 import { DialogContentText, Stack } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import MenuItem from '@mui/material/MenuItem';
@@ -19,23 +19,31 @@ import Tooltip from '@mui/material/Tooltip';
 import { QuestionType, FormType, ChoicesType } from "../types/types";
 import RemoveIcon from '@mui/icons-material/Remove';
 import DeleteIcon from '@mui/icons-material/Delete';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { red } from '@mui/material/colors';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
 
 const Question = ({
     question,
     disable,
     index,
     updateQuestion,
-    //wait to delete questions.
-    //deleteQuestion
+    deleteQuestion
 }: {
     question: QuestionType,
     disable: boolean,
     index: number,
     updateQuestion: (index: number, question: any) => void,
-    //deleteQuestion: (index: number) => void
+    deleteQuestion: (index: number) => void
 }) => {
     const [_question, setQuestion] = useState<QuestionType>(question);
-
+    const [extraOptionsOpen, openExtraOptions] = useState<boolean>(false);
+    const [deleteConf, setDeleteConf] = useState<boolean>(false);
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    
     const updateChoiceValue = (idx: number, newValue: string) => {
         if (_question.choices) {
             if (_question.choices.choices) {
@@ -64,6 +72,7 @@ const Question = ({
     const renderSubOptions = () => {
         switch (_question.type) {
             case 0:
+            case 4:
                 return (
                     <Stack spacing={2}>
                         <div>
@@ -96,40 +105,9 @@ const Question = ({
                 )
 
             case 2:
+            case 3:
                 return (
                     <Stack spacing={2}>
-                        <div>
-                            <Typography variant="h6" component="div">
-                                Choice Options
-                            </Typography>
-                        </div>
-
-                        <Stack spacing={2}>
-                            <div>
-                                <FormControlLabel 
-                                    control={
-                                        <Switch 
-                                            value={_question.choices == null ? false : _question.choices.multiple_sections} 
-                                            onChange={(e) => {
-                                                if (_question.choices) {
-                                                    updateChoiceSettings({
-                                                        ..._question.choices,
-                                                        multiple_sections: e.target.checked
-                                                    })                                                    
-                                                } else {
-                                                    updateChoiceSettings({
-                                                        choices: [],
-                                                        multiple_sections: e.target.checked
-                                                    })
-                                                }
-                                            }} 
-                                        />
-                                    } 
-                                    label="Allow multiple selections" 
-                                />
-                            </div>
-                        </Stack>
-                        
                         { _question.choices != null && _question.choices.choices != null ? 
                             <Stack spacing={2}>
                                 <Typography variant="h6" component="div">
@@ -198,71 +176,123 @@ const Question = ({
         <Paper variant="outlined" elevation={8}>
             <Stack spacing={3} padding={3}>
                 <div>
-                    <Typography variant="h6" component="div">
-                        Question #{question.id+1}
-                    </Typography>
-                    <Divider />
-                </div>
-                <TextField 
-                    variant="outlined"
-                    size="small"
-                    label="Name"
-                    value={_question.name}
-                    onChange={(e) => updateQuestionn({
-                        ..._question,
-                        name: e.target.value
-                    })}
-                    disabled={disable}
-                />
-                <FormControl fullWidth>
-                    <InputLabel>Question Type</InputLabel>
-                    <Select
-                        label="Question Type"
-                        size="small"
-                        value={_question.type}
-                        onChange={(e) => {
-                            let q_type = e.target.value as number;
-                            if (q_type == 2) {
-                                updateQuestionn({
-                                    ..._question,
-                                    type: q_type,
-                                    choices: {
-                                        choices: [],
-                                        multiple_sections: false
-                                    }
-                                });                            
-                            } else {
-                                updateQuestionn({
-                                    ..._question,
-                                    type: q_type
-                                });
-                            }
-                        }}
-                        disabled={disable}
-                    >
-                        <MenuItem value={0}>Text</MenuItem>
-                        <MenuItem value={1}>Number</MenuItem>
-                        <MenuItem value={2}>Choice</MenuItem>
-                    </Select>
-                </FormControl>
-                <div>
-                    <FormControlLabel 
-                        control={
-                            <Switch 
-                                value={_question.required == null ? false : true}
-                                checked={_question.required == null ? false : true} 
-                                onChange={(e) => {
+                    <Toolbar disableGutters>
+                        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                            Question #{question.id+1}
+                        </Typography>
+                        <Stack direction="row" spacing={2}>
+                            <IconButton onClick={(e) => {openExtraOptions(!extraOptionsOpen); setAnchorEl(e.currentTarget);}}> {/* onClick={(_) => deleteQuestion(index)} */}
+                                <MoreVertIcon />
+                            </IconButton>
+
+                            <Menu
+                                id="basic-menu"
+                                anchorEl={anchorEl}
+                                open={extraOptionsOpen}
+                                onClose={(_) => {
+                                    setAnchorEl(null);
+                                    openExtraOptions(false)
+                                }}
+                                MenuListProps={{
+                                'aria-labelledby': 'basic-button',
+                                }}
+                            >
+                                <MenuItem onClick={(_) => {
                                     updateQuestionn({
                                         ..._question,
-                                        required: e.target.checked
+                                        required: (_question.required == null ? true : !_question.required)
                                     });
-                                }} 
-                            />
-                        } 
-                        label="Required" 
-                    />
-                </div>
+                                }}>
+                                    <ListItemIcon>
+                                        { _question.required == null || _question.required !== null && !_question.required ?
+                                            <CheckBoxOutlineBlankIcon />
+                                            :
+                                            <CheckBoxIcon />
+                                        }
+                                    </ListItemIcon>
+                                    <ListItemText>Required</ListItemText>
+                                </MenuItem>
 
+                                <MenuItem onClick={(_) => {
+                                    if (!deleteConf) {
+                                        setDeleteConf(!deleteConf);
+                                        setTimeout(() => {
+                                            setDeleteConf(false);
+                                        }, 5000);
+                                        return
+                                    } else {
+                                        deleteQuestion(index)
+                                        setDeleteConf(false);
+                                    }
+                                }} sx={{color:red[600]}}>
+                                    { deleteConf ? "Are you sure?" : "Delete Question" }
+                                </MenuItem>
+                            </Menu>
+
+                        </Stack>
+                    </Toolbar>
+                    <Divider />
+                </div>
+                <Stack spacing={2} direction={"row"}>
+                    <TextField 
+                        variant="outlined"
+                        size="small"
+                        label="Name"
+                        multiline
+                        value={_question.name}
+                        onChange={(e) => updateQuestionn({
+                            ..._question,
+                            name: e.target.value
+                        })}
+                        disabled={disable}
+                    />
+                    <FormControl sx={{ m: 1, minWidth: 200 }}>
+                        <InputLabel>Question Type</InputLabel>
+                        <Select
+                            label="Question Type"
+                            size="small"
+                            autoWidth
+                            value={_question.type}
+                            onChange={(e) => {
+                                let q_type = e.target.value as number;
+                                if (q_type == 2 || q_type == 3) {
+                                    updateQuestionn({
+                                        ..._question,
+                                        type: q_type,
+                                        choices: {
+                                            choices: [],
+                                            multiple_sections: false
+                                        }
+                                    });                            
+                                } else {
+                                    updateQuestionn({
+                                        ..._question,
+                                        type: q_type
+                                    });
+                                }
+                            }}
+                            disabled={disable}
+                        >
+                            <MenuItem value={0}>Short-Text</MenuItem>
+                            <MenuItem value={4}>Paragraph</MenuItem>
+                            <MenuItem value={1}>Number</MenuItem>
+                            <MenuItem value={2}>Choice</MenuItem>
+                            <MenuItem value={3}>Multi-Select</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Stack>
+                <TextField 
+                        variant="outlined"
+                        size="small"
+                        label="Description"
+                        multiline
+                        value={_question.description}
+                        onChange={(e) => updateQuestionn({
+                            ..._question,
+                            description: e.target.value
+                        })}
+                        disabled={disable}
+                    />
                 {renderSubOptions()}
             </Stack>
         </Paper>
