@@ -4,7 +4,7 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
-    pub database: String,
+    pub dsn: String,
 }
 
 pub static CONFIG: Lazy<Config> = Lazy::new(|| {

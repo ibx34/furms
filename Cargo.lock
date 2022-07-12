@@ -429,6 +429,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "catdoor"
+version = "0.1.0"
+dependencies = [
+ "actix-http",
+ "actix-multipart",
+ "actix-web",
+ "anyhow",
+ "bitflags",
+ "chrono",
+ "dotenv",
+ "futures",
+ "hex",
+ "image",
+ "once_cell",
+ "redis",
+ "regex",
+ "reqwest",
+ "ring",
+ "rust-s3",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_yaml",
+ "sha2",
+ "sha3",
+ "sqlx",
+ "time 0.3.11",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "uuid 1.1.2",
+]
+
+[[package]]
 name = "cc"
 version = "1.0.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -785,41 +820,6 @@ checksum = "5fc25a87fa4fd2094bffb06925852034d90a17f0d1e05197d4956d3555752191"
 dependencies = [
  "matches",
  "percent-encoding",
-]
-
-[[package]]
-name = "furms2"
-version = "0.1.0"
-dependencies = [
- "actix-http",
- "actix-multipart",
- "actix-web",
- "anyhow",
- "bitflags",
- "chrono",
- "dotenv",
- "futures",
- "hex",
- "image",
- "once_cell",
- "redis",
- "regex",
- "reqwest",
- "ring",
- "rust-s3",
- "rust_decimal",
- "serde",
- "serde_json",
- "serde_repr",
- "serde_yaml",
- "sha2",
- "sha3",
- "sqlx",
- "time 0.3.11",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "uuid 1.1.2",
 ]
 
 [[package]]
